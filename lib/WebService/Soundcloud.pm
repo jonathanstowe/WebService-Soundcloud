@@ -1,4 +1,5 @@
 package WebService::Soundcloud;
+
 use 5.006;
 
 use strict;
@@ -13,26 +14,26 @@ use HTTP::Headers;
 
 # declare domains
 our %domain_for = (
-    'prod'        => 'https://api.soundcloud.com/',
-    'production'  => 'https://api.soundcloud.com/',
-    'development' => 'https://api.sandbox-soundcloud.com/',
-    'dev'         => 'https://api.sandbox-soundcloud.com/',
-    'sandbox'     => 'https://api.sandbox-soundcloud.com/'
+   'prod'        => 'https://api.soundcloud.com/',
+   'production'  => 'https://api.soundcloud.com/',
+   'development' => 'https://api.sandbox-soundcloud.com/',
+   'dev'         => 'https://api.sandbox-soundcloud.com/',
+   'sandbox'     => 'https://api.sandbox-soundcloud.com/'
 );
 
 our $DEBUG    = 1;
 our %path_for = (
-    'authorize'    => 'connect',
-    'access_token' => 'oauth2/token'
+   'authorize'    => 'connect',
+   'access_token' => 'oauth2/token'
 );
 
 our %formats = (
-    '*'    => '*/*',
-    'json' => 'application/json',
-    'xml'  => 'application/xml'
+   '*'    => '*/*',
+   'json' => 'application/json',
+   'xml'  => 'application/xml'
 );
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =pod
 
@@ -42,7 +43,7 @@ WebService::Soundcloud - Thin wrapper around Soundcloud RESTful API!
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =head1 SYNOPSIS
 
@@ -98,8 +99,6 @@ Version 0.01
     # Download a track
     my $file_path = $scloud->download('<track_id>', $dest_file);
 
-The above code is a basic usage of WebService::Soundcloud usage in a web environment.
-See sections mentioned below to get more insight into its feature set.
 
 =head1 DESCRIPTION
 
@@ -127,21 +126,22 @@ that can be used across created object.
 
 =cut
 
-sub new {
-    my $class         = shift;
-    my $client_id     = shift;
-    my $client_secret = shift;
-    my $options       = shift;
-    $options->{client_id}     = $client_id;
-    $options->{client_secret} = $client_secret;
-    $options->{debug}         = $DEBUG unless ( $options->{debug} );
-    $options->{user_agent}    = LWP::UserAgent->new;
+sub new
+{
+   my $class         = shift;
+   my $client_id     = shift;
+   my $client_secret = shift;
+   my $options       = shift;
+   $options->{client_id}     = $client_id;
+   $options->{client_secret} = $client_secret;
+   $options->{debug}         = $DEBUG unless ( $options->{debug} );
+   $options->{user_agent}    = LWP::UserAgent->new;
 
-    # Set default response format to json
-    $options->{response_format} = 'json' unless ( $options->{response_format} );
-    $options->{request_format}  = 'json' unless ( $options->{request_format} );
-    my $self = bless $options, $class;
-    return $self;
+   # Set default response format to json
+   $options->{response_format} = 'json' unless ( $options->{response_format} );
+   $options->{request_format}  = 'json' unless ( $options->{request_format} );
+   my $self = bless $options, $class;
+   return $self;
 }
 
 =item I<$OBJ>->get_authorization_url()
@@ -151,18 +151,19 @@ authenticate from soundcloud. This will return URL to which user should be redir
 
 =cut
 
-sub get_authorization_url {
-    my ( $self, $args ) = @_;
-    my $call   = 'get_authorization_url';
-    my $params = {
-        client_id     => $self->{client_id},
-        client_secret => $self->{client_secret},
-        redirect_uri  => $self->{redirect_uri},
-        response_type => 'code'
-    };
-    $params = { %{$params}, %{$args} } if ref($args) eq 'HASH';
-    my $authorize_url = $self->_build_url( $path_for{'authorize'}, $params );
-    return $authorize_url;
+sub get_authorization_url
+{
+   my ( $self, $args ) = @_;
+   my $call   = 'get_authorization_url';
+   my $params = {
+      client_id     => $self->{client_id},
+      client_secret => $self->{client_secret},
+      redirect_uri  => $self->{redirect_uri},
+      response_type => 'code'
+   };
+   $params = { %{$params}, %{$args} } if ref($args) eq 'HASH';
+   my $authorize_url = $self->_build_url( $path_for{'authorize'}, $params );
+   return $authorize_url;
 }
 
 =item I<$OBJ>->get_access_token(<CODE>)
@@ -175,14 +176,15 @@ user behalf.
 
 =cut
 
-sub get_access_token {
-    my ( $self, $code, $args ) = @_;
-    my $request;
-    my $call   = 'get_access_token';
-    my $params = $self->_access_token_params($code);
+sub get_access_token
+{
+   my ( $self, $code, $args ) = @_;
+   my $request;
+   my $call   = 'get_access_token';
+   my $params = $self->_access_token_params($code);
 
-    $params = { %{$params}, %{$args} } if ref($args) eq 'HASH';
-    return $self->_access_token($params);
+   $params = { %{$params}, %{$args} } if ref($args) eq 'HASH';
+   return $self->_access_token($params);
 }
 
 =item _access_token_params
@@ -191,36 +193,36 @@ sub get_access_token {
 
 sub _access_token_params
 {
-	my ( $self, $code ) = @_;
+   my ( $self, $code ) = @_;
 
-	my $params = {
-		        'client_id'     => $self->{client_id},
-				'client_secret' => $self->{client_secret},
-	};
+   my $params = {
+      'client_id'     => $self->{client_id},
+      'client_secret' => $self->{client_secret},
+   };
 
-	$params->{redirect_uri}	=	$self->{redirect_uri};
+   $params->{redirect_uri} = $self->{redirect_uri};
 
-	if ( $self->{scope} )
-	{
-		$params->{scope}  = $self->{scope};
-	}
-	if ( $self->{username} && $self->{password} )
-	{
-		$params->{username} = $self->{username};
-		$params->{password}	= $self->{password};
-		$params->{grant_type} = 'password';
-	}
-	elsif ( defined $code )
-	{
-		$params->{code}	= $code;
-        $params->{grant_type}  = 'authorization_code';
-	}
-	else
-	{
-		die "neither credentials or auth code provided";
-	}
+   if ( $self->{scope} )
+   {
+      $params->{scope} = $self->{scope};
+   }
+   if ( $self->{username} && $self->{password} )
+   {
+      $params->{username}   = $self->{username};
+      $params->{password}   = $self->{password};
+      $params->{grant_type} = 'password';
+   }
+   elsif ( defined $code )
+   {
+      $params->{code}       = $code;
+      $params->{grant_type} = 'authorization_code';
+   }
+   else
+   {
+      die "neither credentials or auth code provided";
+   }
 
-	return $params;
+   return $params;
 }
 
 =item I<$OBJ>->get_access_token_refresh(<REFRESH_TOKEN>)
@@ -232,17 +234,18 @@ it should be sent along with every request to access private resources on the us
 
 =cut
 
-sub get_access_token_refresh {
-    my ( $self, $refresh_token, $args ) = @_;
-    my $params = {
-        'refresh_token' => $refresh_token,
-        'client_id'     => $self->{client_id},
-        'client_secret' => $self->{client_secret},
-        'redirect_uri'  => $self->{redirect_uri},
-        'grant_type'    => 'refresh_token'
-    };
-    $params = { %{$params}, %{$args} } if ref($args) eq 'HASH';
-    return $self->_access_token($params);
+sub get_access_token_refresh
+{
+   my ( $self, $refresh_token, $args ) = @_;
+   my $params = {
+      'refresh_token' => $refresh_token,
+      'client_id'     => $self->{client_id},
+      'client_secret' => $self->{client_secret},
+      'redirect_uri'  => $self->{redirect_uri},
+      'grant_type'    => 'refresh_token'
+   };
+   $params = { %{$params}, %{$args} } if ref($args) eq 'HASH';
+   return $self->_access_token($params);
 }
 
 =item I<$OBJ>->request(<METHOD>, <URL>, <HEADERS>, <CONTENT>)
@@ -254,18 +257,19 @@ is used to send content to the <URL>. This method will return HTTP::Response obj
 
 =cut
 
-sub request {
-    my ( $self, $method, $url, $headers, $content ) = @_;
-    my $req = HTTP::Request->new( $method, $url, $headers);
+sub request
+{
+   my ( $self, $method, $url, $headers, $content ) = @_;
+   my $req = HTTP::Request->new( $method, $url, $headers );
 
-    if ( defined $content )
-    {
+   if ( defined $content )
+   {
       my $u = URI->new();
       $u->query_form($content);
-	  my $query = $u->query();
-	  $req->content($query);
-    }
-    return $self->{user_agent}->request($req);
+      my $query = $u->query();
+      $req->content($query);
+   }
+   return $self->{user_agent}->request($req);
 }
 
 =item get_object
@@ -276,15 +280,15 @@ This returns a decoded object corresponding to the URI given
 
 sub get_object
 {
-   my ( $self, $url,$params, $headers ) = @_;
+   my ( $self, $url, $params, $headers ) = @_;
 
    my $obj;
 
-   my $res = $self->get($url, $params, $headers);
+   my $res = $self->get( $url, $params, $headers );
 
    if ( $res->is_success() )
    {
-       $obj = decode_json($res->decoded_content());
+      $obj = decode_json( $res->decoded_content() );
    }
 
    return $obj;
@@ -298,38 +302,38 @@ This returns a decoded LIST REF of the list method specified by URI
 
 sub get_list
 {
-	my ( $self, $url,$params, $headers ) = @_;
+   my ( $self, $url, $params, $headers ) = @_;
 
-    my $ret = [];
-    my $continue = 1;
-    my $offset = 0;
-    my $limit = 50;
+   my $ret      = [];
+   my $continue = 1;
+   my $offset   = 0;
+   my $limit    = 50;
 
-    if (!defined $params )
-    {
-        $params = {};
-    }
-	while ( $continue )
-    {
-	     $params->{limit} 	= $limit;
-		 $params->{offset}	=	$offset;
+   if ( !defined $params )
+   {
+      $params = {};
+   }
+   while ($continue)
+   {
+      $params->{limit}  = $limit;
+      $params->{offset} = $offset;
 
-		my $res = $self->get($url, $params, $headers);
+      my $res = $self->get( $url, $params, $headers );
 
-		if ( $res->is_success() )
-		{
-			my $obj = decode_json($res->decoded_content());
-			push @{$ret}, @{$obj};
-			$offset += $limit;
-			$continue = scalar @{$obj};
-		}
-		else
-		{
-		   die $res->status_line();
-		}
-	}
+      if ( $res->is_success() )
+      {
+         my $obj = decode_json( $res->decoded_content() );
+         push @{$ret}, @{$obj};
+         $offset += $limit;
+         $continue = scalar @{$obj};
+      }
+      else
+      {
+         die $res->status_line();
+      }
+   }
 
-	return $ret;
+   return $ret;
 }
 
 =item I<$OBJ>->get(<URL>, <PARAMS>, <HEADERS>)
@@ -341,11 +345,12 @@ This method will return HTTP::Response object
 
 =cut
 
-sub get {
-    my ( $self, $path, $params, $extra_headers ) = @_;
-    my $url = $self->_build_url( $path, $params );
-    my $headers = $self->_build_headers($extra_headers);
-    return $self->request( 'GET', $url, $headers );
+sub get
+{
+   my ( $self, $path, $params, $extra_headers ) = @_;
+   my $url = $self->_build_url( $path, $params );
+   my $headers = $self->_build_headers($extra_headers);
+   return $self->request( 'GET', $url, $headers );
 }
 
 =item I<$OBJ>->post(<URL>, <CONTENT>, <HEADERS>)
@@ -357,11 +362,12 @@ This method will return HTTP::Response object
 
 =cut
 
-sub post {
-    my ( $self, $path, $content, $extra_headers ) = @_;
-    my $url     = $self->_build_url($path);
-    my $headers = $self->_build_headers($extra_headers);
-    return $self->request( 'POST', $url, $headers, $content );
+sub post
+{
+   my ( $self, $path, $content, $extra_headers ) = @_;
+   my $url     = $self->_build_url($path);
+   my $headers = $self->_build_headers($extra_headers);
+   return $self->request( 'POST', $url, $headers, $content );
 }
 
 =item I<$OBJ>->put(<URL>, <CONTENT>, <HEADERS>)
@@ -373,15 +379,16 @@ This method will return HTTP::Response object
 
 =cut
 
-sub put {
-    my ( $self, $path, $content, $extra_headers ) = @_;
-    my $url = $self->_build_url($path);
+sub put
+{
+   my ( $self, $path, $content, $extra_headers ) = @_;
+   my $url = $self->_build_url($path);
 
 # Set Content-Length Header as well otherwise nginx will throw 411 Length Required ERROR
-    $extra_headers->{'Content-Length'} = 0
-      unless $extra_headers->{'Content-Length'};
-    my $headers = $self->_build_headers($extra_headers);
-    return $self->request( 'PUT', $url, $headers, $content );
+   $extra_headers->{'Content-Length'} = 0
+     unless $extra_headers->{'Content-Length'};
+   my $headers = $self->_build_headers($extra_headers);
+   return $self->request( 'PUT', $url, $headers, $content );
 }
 
 =item I<$OBJ>->delete(<URL>, <PARAMS>, <HEADERS>)
@@ -393,11 +400,12 @@ send headers. This method will return HTTP::Response object
 
 =cut
 
-sub delete {
-    my ( $self, $path, $params, $extra_headers ) = @_;
-    my $url = $self->_build_url( $path, $params );
-    my $headers = $self->_build_headers($extra_headers);
-    return $self->request( 'DELETE', $url, $headers );
+sub delete
+{
+   my ( $self, $path, $params, $extra_headers ) = @_;
+   my $url = $self->_build_url( $path, $params );
+   my $headers = $self->_build_headers($extra_headers);
+   return $self->request( 'DELETE', $url, $headers );
 }
 
 =item I<$OBJ>->download(<TRACK_ID>, <DEST_FILE>)
@@ -408,22 +416,23 @@ be saved to. This method will return the file path of downloaded track.
 
 =cut
 
-sub download {
-    my ( $self, $trackid, $file ) = @_;
-    my $url =
-      $self->_build_url( "/tracks/$trackid/download",
-        { ':content_file' => $file } );
+sub download
+{
+   my ( $self, $trackid, $file ) = @_;
+   my $url =
+     $self->_build_url( "/tracks/$trackid/download",
+      { ':content_file' => $file } );
 
-    # Set Response format to */*
-    # Memorize old response format
-    my $old_response_format = $self->{response_format};
-    $self->{response_format} = $formats{'*'};
-    my $headers = $self->_build_headers();
-    my $response = $self->request( 'GET', $url, $headers );
+   # Set Response format to */*
+   # Memorize old response format
+   my $old_response_format = $self->{response_format};
+   $self->{response_format} = $formats{'*'};
+   my $headers = $self->_build_headers();
+   my $response = $self->request( 'GET', $url, $headers );
 
-    # Reset response format
-    $self->{response_format} = $formats{$old_response_format};
-    return $file;
+   # Reset response format
+   $self->{response_format} = $formats{$old_response_format};
+   return $file;
 }
 
 =item I<$OBJ>->request_format(<TYPE>)
@@ -434,14 +443,17 @@ sent to soundcloud. Basically when you are setting request_format it will set
 
 =cut
 
-sub request_format {
-    my ( $self, $format ) = @_;
-    if ($format) {
-        $self->{request_format} = $format;
-    }
-    else {
-        return $self->{request_format};
-    }
+sub request_format
+{
+   my ( $self, $format ) = @_;
+   if ($format)
+   {
+      $self->{request_format} = $format;
+   }
+   else
+   {
+      return $self->{request_format};
+   }
 }
 
 =item I<$OBJ>->response_format(<TYPE>)
@@ -452,14 +464,17 @@ sent to soundcloud. Basically when you are setting response_format it will set
 
 =cut
 
-sub response_format {
-    my ( $self, $format ) = @_;
-    if ($format) {
-        $self->{response_format} = $format;
-    }
-    else {
-        return $self->{response_format};
-    }
+sub response_format
+{
+   my ( $self, $format ) = @_;
+   if ($format)
+   {
+      $self->{response_format} = $format;
+   }
+   else
+   {
+      return $self->{response_format};
+   }
 }
 
 =back
@@ -479,24 +494,29 @@ from get_access_token and get_access_token_refresh methods.
 
 =cut
 
-sub _access_token {
-    my ( $self, $params ) = @_;
-    my $call     = '_access_token';
-    my $url      = $self->_access_token_url();
-    my $headers  = $self->_build_headers();
-    my $response = $self->request( 'POST', $url, $headers, $params );
-    die "Failed to fetch " . $url . " " . $response->content() . " (" . $response->status_line() . ")"
-      unless $response->is_success;
-    my $uri          = URI->new;
-    my $access_token = decode_json( $response->decoded_content );
+sub _access_token
+{
+   my ( $self, $params ) = @_;
+   my $call     = '_access_token';
+   my $url      = $self->_access_token_url();
+   my $headers  = $self->_build_headers();
+   my $response = $self->request( 'POST', $url, $headers, $params );
+   die "Failed to fetch " 
+     . $url . " "
+     . $response->content() . " ("
+     . $response->status_line() . ")"
+     unless $response->is_success;
+   my $uri          = URI->new;
+   my $access_token = decode_json( $response->decoded_content );
 
-    # store access_token, refresh_token
-    foreach (qw(access_token refresh_token expire expires_in)) {
-        $self->{$_} = $access_token->{$_};
-    }
+   # store access_token, refresh_token
+   foreach (qw(access_token refresh_token expire expires_in))
+   {
+      $self->{$_} = $access_token->{$_};
+   }
 
-    # set access_token, refresh_token
-    return $access_token;
+   # set access_token, refresh_token
+   return $access_token;
 }
 
 =item I<$OBJ>->_access_token_url(<PARAMS>)
@@ -506,10 +526,11 @@ This will be called from _access_token method.
 
 =cut
 
-sub _access_token_url {
-    my ( $self, $params ) = @_;
-    my $url = $self->_build_url( $path_for{'access_token'}, $params );
-    return $url;
+sub _access_token_url
+{
+   my ( $self, $params ) = @_;
+   my $url = $self->_build_url( $path_for{'access_token'}, $params );
+   return $url;
 }
 
 =item I<$OBJ>->_build_url(<PATH>, PARAMS>)
@@ -518,18 +539,19 @@ This method is used to prepare absolute URL for a given path and request paramet
 
 =cut
 
-sub _build_url {
-    my ( $self, $path, $params ) = (@_);
-    my $call = '_build_url';
+sub _build_url
+{
+   my ( $self, $path, $params ) = (@_);
+   my $call = '_build_url';
 
-    # get base URL
-    my $base_url =
-      $self->{development} ? $domain_for{development} : $domain_for{production};
+   # get base URL
+   my $base_url =
+     $self->{development} ? $domain_for{development} : $domain_for{production};
 
-    # Prepare URI Object
-    my $uri = URI->new_abs( $path, $base_url );
-    $uri->query_form( %{$params} );
-    return $uri;
+   # Prepare URI Object
+   my $uri = URI->new_abs( $path, $base_url );
+   $uri->query_form( %{$params} );
+   return $uri;
 }
 
 =item I<$OBJ>->_build_headers(<HEADERS>)
@@ -538,20 +560,22 @@ This method is used to set extra headers to the current HTTP Request.
 
 =cut
 
-sub _build_headers {
-    my ( $self, $extra ) = @_;
-    my $headers = HTTP::Headers->new;
+sub _build_headers
+{
+   my ( $self, $extra ) = @_;
+   my $headers = HTTP::Headers->new;
 
-    $headers->header( 'Accept' => $formats{ $self->{response_format} } )
-      if ( $self->{response_format} );
-    $headers->header( 'Content-Type' => $formats{ $self->{request_format} } )
-      if ( $self->{request_format} );
-    $headers->header( 'Authorization' => "OAuth " . $self->{access_token} )
-      if ( $self->{access_token} );
-    foreach my $key ( %{$extra} ) {
-        $headers->header( $key => $extra->{$key} );
-    }
-    return $headers;
+   $headers->header( 'Accept' => $formats{ $self->{response_format} } )
+     if ( $self->{response_format} );
+   $headers->header( 'Content-Type' => $formats{ $self->{request_format} } )
+     if ( $self->{request_format} );
+   $headers->header( 'Authorization' => "OAuth " . $self->{access_token} )
+     if ( $self->{access_token} );
+   foreach my $key ( %{$extra} )
+   {
+      $headers->header( $key => $extra->{$key} );
+   }
+   return $headers;
 }
 
 =item I<$OBJ>->log(<MSG>)
@@ -560,51 +584,50 @@ This method is used to write some text to STDERR.
 
 =cut
 
-sub log {
-    my ( $self, $msg ) = @_;
-    if ( $self->{debug} ) {
-        print STDERR "$msg\n";
-    }
+sub log
+{
+   my ( $self, $msg ) = @_;
+   if ( $self->{debug} )
+   {
+      print STDERR "$msg\n";
+   }
 }
 
 =back
 
 =head1 AUTHOR
 
+Jonathan Stowe C<jns+gh@gellyfish.co.uk>
+
+Based on the originally released version on CPAN by
+
 Mohan Prasad Gutta, C<< <mohanprasadgutta at gmail.com> >>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-net-soundcloud at rt.cpan.org>,
-or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=WebService-Soundcloud>.
-I will be notified, and then you'll automatically be notified of progress on your bug 
-as I make changes.
+Parts of this are extremely difficult to test properly so there almost
+certainly will be bugs, please feel free to fix and send me a patch if
+you find one.
 
 =head1 SUPPORT
 
-You can find documentation for this module with the perldoc command.
-    perldoc WebService::Soundcloud
-You can also look for information at:
+This is un-released developer code made available in case someone else might
+find it useful.
 
-=over 4
+If you find a bug and can fix it, or have a feature request and can
+implement it then please feel free to fork the repository at
 
-=item * RT: CPAN's request tracker (report bugs here)
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=WebService-Soundcloud>
+    https://github.com/jonathanstowe/WebService-Soundcloud
 
-=item * AnnoCPAN: Annotated CPAN documentation
-L<http://annocpan.org/dist/WebService-Soundcloud>
-
-=item * CPAN Ratings
-L<http://cpanratings.perl.org/d/WebService-Soundcloud>
-
-=item * Search CPAN
-L<http://search.cpan.org/dist/WebService-Soundcloud/>
+and send a pull request with your changes.  
 
 =back
 
 =head1 LICENSE AND COPYRIGHT
 
 Copyright 2011 Mohan Prasad Gutta.
+          2013 Jonathan Stowe
+
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published
 by the Free Software Foundation; or the Artistic License.
