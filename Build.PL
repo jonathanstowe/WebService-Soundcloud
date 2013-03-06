@@ -5,11 +5,12 @@ use Module::Build;
 my $builder = Module::Build->new(
     module_name       => 'WebService::Soundcloud',
     license           => 'perl',
-    dist_author       => q{Mohan Prasad Gutta <mohanprasadgutta@gmail.com>},
+    dist_author       => 'Jonathan Stowe <jns+gh@gellyfish.co.uk>',
     dist_version_from => 'lib/WebService/Soundcloud.pm',
     build_requires    => {
         'Test::More'     => 0,
-        'LWP::UserAgent' => 0,
+        'LWP::UserAgent' => '6.03',
+        'LWP::Protocol::https'   => '6.02',
         'URI'            => 0,
         'JSON'           => 0,
         'HTTP::Headers'  => 0
