@@ -11,3 +11,4 @@ t/03-manifest.t
 t/04-pod.t
 t/06-pod-coverage.t
 t/07-get.t
+t/08-credentials.t

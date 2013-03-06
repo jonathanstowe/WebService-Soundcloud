@@ -11,6 +11,7 @@ use URI;
 use JSON qw(decode_json);
 use Data::Dumper;
 use HTTP::Headers;
+use Scalar::Util qw(reftype);
 
 # declare domains
 our %domain_for = (
@@ -468,13 +469,45 @@ sub get_list
 
       if ( $res->is_success() )
       {
-         my $obj = $self->parse_content( $res->decoded_content() );
-         push @{$ret}, @{$obj};
-         $offset += $limit;
-         $continue = scalar @{$obj};
+         if (defined(my $obj = $self->parse_content( $res->decoded_content())))
+         {
+             if (defined (my $type = reftype($obj) ) )
+             {
+                 if ( $type eq 'ARRAY' )
+                 {
+                     $offset += $limit;
+                     $continue = scalar @{$obj};
+                 }
+                 elsif ( $type eq 'HASH' )
+                 {
+                     if ( exists $obj->{collection} )
+                     {
+                        if(!defined($url = $obj->{next_href}))
+                        {
+                            $continue = 0;
+                        }
+                        $obj = $obj->{collection};
+                     }
+                     else
+                     {
+                         croak "not a collection";
+                     }
+                 }
+                 else
+                 {
+                     croak "Unexpected $type reference instead of list";
+                 }
+                  push @{$ret}, @{$obj};
+             }
+         }
+         else
+         {
+             $continue = 0;
+         }
       }
       else
       {
+         warn $res->request()->uri();
          die $res->status_line();
       }
    }
@@ -816,6 +849,11 @@ sub _build_url
    #$params->{client_id} = $self->client_id();
    # Prepare URI Object
    my $uri = URI->new_abs( $path, $base_url );
+   
+   if ( $uri->query() )
+   {
+       $params = { %{$params || {}}, $uri->query_form() };
+   }
    $uri->query_form( %{$params} );
    return $uri;
 }
