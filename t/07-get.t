@@ -9,19 +9,20 @@ my $scloud = WebService::Soundcloud->new(
     'twr9Wj7Qw16qrChi2lpl4dxTEWix9JuSg8mOgdF52F8',
     {
         redirect_uri    => 'http://localhost/callback',
-        debug           => 1,
-        request_format  => 'json',
-        response_format => 'json'
+        debug           => 0,
     }
 );
+
 isa_ok( $scloud, "WebService::Soundcloud" );
 # coverage for response_format and request_format subroutines
 my $res_format = 'xml';
 my $req_format = 'xml';
 # default should be set to 'json', get response_format test
 ok( defined( $scloud->response_format() ), "response_format is defined." );
+is($scloud->response_format(), 'json', 'and has the correct default');
 # default should be set to 'json', get request_format test
 ok( defined( $scloud->request_format() ), "request_format is defined." );
+is($scloud->request_format(), 'json', 'and has the correct default');
 # set response_format test
 ok(
     $res_format eq $scloud->response_format($res_format),
@@ -38,8 +39,23 @@ ok($url eq $redirect_url, 'Get Authrorization URL is success!');
 my $access_token = '6c56e362267b3c0613c1daf784de98c7';
 $scloud->{access_token} = $access_token;
 
-my $me = $scloud->get('/me');
-print $me->decoded_content, "\n";
+ok(my $me = $scloud->get('/me'),'get to me');
+ok($me->is_success(),"and request worked");
 
-my $tracks = $scloud->get('/tracks');
-print $tracks->decoded_content, "\n";
+ok(my $tracks = $scloud->get('/me/tracks'), 'get to /me/tracks');
+ok($tracks->is_success(), "and the request succeeded");
+
+ok($tracks = $scloud->get_list('/me/tracks'), "get_list on '/me/tracks'");
+ok(@{$tracks}, "there are tracks - fragile as it could get deleted");
+foreach my $track (@{$tracks})
+{
+    ok(my $id = $track->{id}, "and we got a track ID");
+    my $file = $id . '.' . ( $track->{'original-format'} || 'wav');
+    TODO:
+    {
+        local $TODO = 'Downloads not working yet';
+         ok($scloud->download($id, $file), "download");
+         ok(-s $file, "and the file got downloaded");
+         unlink $file;
+    }
+}
