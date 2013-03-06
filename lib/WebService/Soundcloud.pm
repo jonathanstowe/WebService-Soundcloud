@@ -167,10 +167,11 @@ sub get_authorization_url {
 
 =item I<$OBJ>->get_access_token(<CODE>)
 
-This method is used to receive access_token, refresh_token, scope, expires_in details
-from soundcloud once user is authenticated. access_token, refresh_token should be 
-stored as it should be sent along with every request to access private resources 
-on the user behalf.
+This method is used to receive access_token, refresh_token,
+scope, expires_in details from soundcloud once user is
+authenticated. access_token, refresh_token should be stored as it should
+be sent along with every request to access private resources on the
+user behalf.
 
 =cut
 
@@ -178,16 +179,48 @@ sub get_access_token {
     my ( $self, $code, $args ) = @_;
     my $request;
     my $call   = 'get_access_token';
-    my $params = {
-        'code'          => $code,
-        'client_id'     => $self->{client_id},
-        'client_secret' => $self->{client_secret},
-        'redirect_uri'  => $self->{redirect_uri},
-        'grant_type'    => 'authorization_code'
-    };
+    my $params = $self->_access_token_params($code);
 
     $params = { %{$params}, %{$args} } if ref($args) eq 'HASH';
     return $self->_access_token($params);
+}
+
+=item _access_token_params
+
+=cut
+
+sub _access_token_params
+{
+	my ( $self, $code ) = @_;
+
+	my $params = {
+		        'client_id'     => $self->{client_id},
+				'client_secret' => $self->{client_secret},
+	};
+
+	$params->{redirect_uri}	=	$self->{redirect_uri};
+
+	if ( $self->{scope} )
+	{
+		$params->{scope}  = $self->{scope};
+	}
+	if ( $self->{username} && $self->{password} )
+	{
+		$params->{username} = $self->{username};
+		$params->{password}	= $self->{password};
+		$params->{grant_type} = 'password';
+	}
+	elsif ( defined $code )
+	{
+		$params->{code}	= $code;
+        $params->{grant_type}  = 'authorization_code';
+	}
+	else
+	{
+		die "neither credentials or auth code provided";
+	}
+
+	return $params;
 }
 
 =item I<$OBJ>->get_access_token_refresh(<REFRESH_TOKEN>)
@@ -223,8 +256,80 @@ is used to send content to the <URL>. This method will return HTTP::Response obj
 
 sub request {
     my ( $self, $method, $url, $headers, $content ) = @_;
-    return $self->{user_agent}
-      ->request( HTTP::Request->new( $method, $url, $headers, $content ) );
+    my $req = HTTP::Request->new( $method, $url, $headers);
+
+    if ( defined $content )
+    {
+      my $u = URI->new();
+      $u->query_form($content);
+	  my $query = $u->query();
+	  $req->content($query);
+    }
+    return $self->{user_agent}->request($req);
+}
+
+=item get_object
+
+This returns a decoded object corresponding to the URI given
+
+=cut
+
+sub get_object
+{
+   my ( $self, $url,$params, $headers ) = @_;
+
+   my $obj;
+
+   my $res = $self->get($url, $params, $headers);
+
+   if ( $res->is_success() )
+   {
+       $obj = decode_json($res->decoded_content());
+   }
+
+   return $obj;
+}
+
+=item get_list
+
+This returns a decoded LIST REF of the list method specified by URI
+
+=cut
+
+sub get_list
+{
+	my ( $self, $url,$params, $headers ) = @_;
+
+    my $ret = [];
+    my $continue = 1;
+    my $offset = 0;
+    my $limit = 50;
+
+    if (!defined $params )
+    {
+        $params = {};
+    }
+	while ( $continue )
+    {
+	     $params->{limit} 	= $limit;
+		 $params->{offset}	=	$offset;
+
+		my $res = $self->get($url, $params, $headers);
+
+		if ( $res->is_success() )
+		{
+			my $obj = decode_json($res->decoded_content());
+			push @{$ret}, @{$obj};
+			$offset += $limit;
+			$continue = scalar @{$obj};
+		}
+		else
+		{
+		   die $res->status_line();
+		}
+	}
+
+	return $ret;
 }
 
 =item I<$OBJ>->get(<URL>, <PARAMS>, <HEADERS>)
@@ -377,10 +482,10 @@ from get_access_token and get_access_token_refresh methods.
 sub _access_token {
     my ( $self, $params ) = @_;
     my $call     = '_access_token';
-    my $url      = $self->_access_token_url($params);
+    my $url      = $self->_access_token_url();
     my $headers  = $self->_build_headers();
-    my $response = $self->request( 'POST', $url, $headers );
-    die "Failed to fetch " . $self->_access_token_url()
+    my $response = $self->request( 'POST', $url, $headers, $params );
+    die "Failed to fetch " . $url . " " . $response->content() . " (" . $response->status_line() . ")"
       unless $response->is_success;
     my $uri          = URI->new;
     my $access_token = decode_json( $response->decoded_content );
