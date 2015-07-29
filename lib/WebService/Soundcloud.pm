@@ -1,42 +1,6 @@
-package WebService::Soundcloud;
+use v6;
 
-use 5.006;
-
-use strict;
-use warnings;
-
-use Carp;
-use LWP::UserAgent;
-use URI;
-use JSON qw(decode_json);
-use Data::Dumper;
-use HTTP::Headers;
-use Scalar::Util qw(reftype);
-
-# declare domains
-our %domain_for = (
-   'prod'        => 'https://api.soundcloud.com/',
-   'production'  => 'https://api.soundcloud.com/',
-   'development' => 'https://api.sandbox-soundcloud.com/',
-   'dev'         => 'https://api.sandbox-soundcloud.com/',
-   'sandbox'     => 'https://api.sandbox-soundcloud.com/'
-);
-
-our $DEBUG    = 0;
-our %path_for = (
-   'authorize'    => 'connect',
-   'access_token' => 'oauth2/token'
-);
-
-our %formats = (
-   '*'    => '*/*',
-   'json' => 'application/json',
-   'xml'  => 'application/xml'
-);
-
-our $VERSION = '0.02';
-
-=pod
+=begin pod
 
 =head1 NAME
 
@@ -44,19 +8,17 @@ WebService::Soundcloud - Thin wrapper around Soundcloud RESTful API!
 
 =head1 VERSION
 
-Version 0.02
+Version 0.0.1
 
 =head1 SYNOPSIS
 
-    #!/usr/bin/perl
+    #!/usr/bin/perl6
     use WebService::Soundcloud;
     
-    my $scloud = WebService::Soundcloud->new($client_id, $client_secret, 
-                           { redirect_uri => 'http://mydomain.com/callback' }
-                         );
+    my $scloud = WebService::Soundcloud.new(:$client-id, :$client-secret, redirect-uri => 'http://mydomain.com/callback' );
     
     # Now get authorization url
-    my $authorization_url = $scloud->get_authorization_url();
+    my $authorization_url = $scloud.get-authorization-url();
     
     # Redirect the user to authorization url
     use CGI;
@@ -116,139 +78,107 @@ connect.
 
 =head2 METHODS
 
-=over 4
 
-=item new
+=head3 new
 
 Returns a newly created C<WebService::Soundcloud> object. The first
-argument is $client_id, the second argument is $client_secret - these
+named argument is client-id, the second argument is client-secret - these
 are required and will have been provided when you registered your
-application with Soundcloud The third optional argument is a 
-HASHREF that contains additional parameters that may be required:
+application with Soundcloud. 
 
-=over 4
-
-=item redirect_uri
-
-This is the URI of your application to which the user will be redirected
-after they have authorised the connection with Soundcloud.  This should
-be the same as the one provided when you registered your application and
-will be required for most applications.
-
-=back
-
-=cut
-
-sub new
-{
-   my ($class, $client_id, $client_secret, $options ) = @_;
-
-   if(!defined $client_id && !defined $client_secret )
-   {
-       croak "Client ID and Secret required";
-   }
-
-   $options = {} unless defined $options;
-
-   my $self = bless $options, $class;
-
-   $self->client_id($client_id);
-   $self->client_secret($client_secret);
-
-   $options->{debug}         = $DEBUG unless ( $options->{debug} );
-
-
-   return $self;
-}
-
-=item client_id
+=head3 client-id
 
 Accessor for the Client ID that was provided when you registered your
 application.
 
-=cut
 
-sub client_id
-{
-    my ( $self, $client_id ) = @_;
-
-   if ( defined $client_id ) 
-   {
-       $self->{client_id} = $client_id;
-   }
-
-   return $self->{client_id};
-}
-
-=item client_secret
+=head3 client-secret
 
 Accessor for the Client Secret that was provided when you registered
 your application.
 
-=cut
-
-sub client_secret
-{
-    my ( $self, $client_secret ) = @_;
-
-   if ( defined $client_secret ) 
-   {
-       $self->{client_secret} = $client_secret;
-   }
-
-   return $self->{client_secret};
-}
-
-=item redirect_uri
+=head3 redirect-uri
 
 Accessor for the redirect_uri this can be passed as an option to the
 constructor or supplied later (before any connect call.) This should
 match to that provided when you registered your application.
+
+This can be supplied as an option to the constructor.
 
 It is the URI of your application that the user will be redirected
 (with the authorization code as a parameter,) after they have clicked
 "Connect" on the soundcloud connect page.  This will not be used if
 you are using the credential based authentication to obtain the OAuth token
 (e.g if you are an application with no UI that is operating for a single
-user.)
+user.) 
 
-=cut
+=end pod
 
-sub redirect_uri
-{
-    my ( $self, $redirect_uri ) = @_;
+class WebService::Soundcloud:ver<v0.0.1> {
 
-   if ( defined $redirect_uri ) 
-   {
-       $self->{redirect_uri} = $redirect_uri;
-   }
+use Carp:from<Perl5>;
+use LWP::UserAgent:from<Perl5>;
+use URI:from<Perl5>;
+use JSON:from<Perl5> qw (decode_json);
+use Data::Dumper:from<Perl5>;
+use HTTP::Headers:from<Perl5>;
+use Scalar::Util:from<Perl5> qw (reftype);
 
-   return $self->{redirect_uri};
+# declare domains
+our %domain_for = (
+   'prod'        => 'https://api.soundcloud.com/',
+   'production'  => 'https://api.soundcloud.com/',
+   'development' => 'https://api.sandbox-soundcloud.com/',
+   'dev'         => 'https://api.sandbox-soundcloud.com/',
+   'sandbox'     => 'https://api.sandbox-soundcloud.com/'
+);
+
+our $DEBUG    = 0;
+our %path_for = (
+   'authorize'    => 'connect',
+   'access_token' => 'oauth2/token'
+);
+
+our %formats = (
+   '*'    => '*/*',
+   'json' => 'application/json',
+   'xml'  => 'application/xml'
+);
+
+
+has Str $.client-id;
+has Str $.client-secret;
+has %!options;
+
+submethod BUILD(:$!client-id!, :$!client-secret!, *%options) {
+
+   %!options = %options;
+}
+
+
+method redirect-uri returns Str is rw {
+    %!options<redirect-uri>;
 }
 
 =item basic_params
 
-This returns a HASHREF that is suitable to be used as the basic parameters
+This returns a L<Hash> that is suitable to be used as the basic parameters
 in most places, containing the application credentials (ID and Secret) and
 redirect_uri
 
 =cut
 
-sub basic_params
-{
-    my ( $self ) = @_;
+method basic-params() is rw {
+    my %params = (
+        client_id       => $!client_id,
+        client_secret   => $!client-secret,
+    );
 
-    my $params = {
-        client_id => $self->client_id(),
-        client_secret   => $self->client_secret(),
-    };
-
-    if ( defined $self->redirect_uri() )
-    {
-        $params->{redirect_uri} = $self->redirect_uri();
+    if self.redirect-uri.defined {
+        %params<redirect_uri> = self.redirect-uri;
     }
 
-    return $params;
+    return %params;
 
 }
 
@@ -263,12 +193,12 @@ sub ua
 {
     my ( $self ) = @_;
 
-    if (!defined $self->{user_agent} )
+    if (?^defined $self.{'user_agent'} )
     {
-        $self->{user_agent} = LWP::UserAgent->new();
+        $self.{'user_agent'} = LWP::UserAgent.new();
     }
 
-    return $self->{user_agent};
+    return $self.{'user_agent'};
 }
 
 =item get_authorization_url
@@ -283,12 +213,12 @@ sub get_authorization_url
 {
    my ( $self, $args ) = @_;
    my $call   = 'get_authorization_url';
-   my $params = $self->basic_params();
+   my $params = $self.basic_params();
 
-   $params->{response_type} = 'code';
+   $params.{'response_type'} = 'code';
 
-   $params = { %{$params}, %{$args} } if ref($args) eq 'HASH';
-   my $authorize_url = $self->_build_url( $path_for{'authorize'}, $params );
+   $params = { %($params), %($args) } if ref($args) eq 'HASH';
+   my $authorize_url = $self._build_url( %path_for{'authorize'}, $params );
    return $authorize_url;
 }
 
@@ -311,10 +241,10 @@ sub get_access_token
    my ( $self, $code, $args ) = @_;
    my $request;
    my $call   = 'get_access_token';
-   my $params = $self->_access_token_params($code);
+   my $params = $self._access_token_params($code);
 
-   $params = { %{$params}, %{$args} } if ref($args) eq 'HASH';
-   return $self->_access_token($params);
+   $params = { %($params), %($args) } if ref($args) eq 'HASH';
+   return $self._access_token($params);
 }
 
 =item _access_token_params
@@ -325,22 +255,22 @@ sub _access_token_params
 {
    my ( $self, $code ) = @_;
 
-   my $params = $self->basic_params();
+   my $params = $self.basic_params();
 
-   if ( $self->{scope} )
+   if ( $self.{'scope'} )
    {
-      $params->{scope} = $self->{scope};
+      $params.{'scope'} = $self.{'scope'};
    }
-   if ( $self->{username} && $self->{password} )
+   if ( $self.{'username'} && $self.{'password'} )
    {
-      $params->{username}   = $self->{username};
-      $params->{password}   = $self->{password};
-      $params->{grant_type} = 'password';
+      $params.{'username'}   = $self.{'username'};
+      $params.{'password'}   = $self.{'password'};
+      $params.{'grant_type'} = 'password';
    }
    elsif ( defined $code )
    {
-      $params->{code}       = $code;
-      $params->{grant_type} = 'authorization_code';
+      $params.{'code'}       = $code;
+      $params.{'grant_type'} = 'authorization_code';
    }
    else
    {
@@ -368,13 +298,13 @@ sub get_access_token_refresh
 {
    my ( $self, $refresh_token, $args ) = @_;
 
-   my $params = $self->basic_params();
+   my $params = $self.basic_params();
 
-   $params->{refresh_token} = $refresh_token;
-   $params->{grant_type}    = 'refresh_token';
+   $params.{'refresh_token'} = $refresh_token;
+   $params.{'grant_type'}    = 'refresh_token';
 
-   $params = { %{$params}, %{$args} } if ref($args) eq 'HASH';
-   return $self->_access_token($params);
+   $params = { %($params), %($args) } if ref($args) eq 'HASH';
+   return $self._access_token($params);
 }
 
 =item request
@@ -392,17 +322,17 @@ determine the status of the request.
 sub request
 {
    my ( $self, $method, $url, $headers, $content ) = @_;
-   my $req = HTTP::Request->new( $method, $url, $headers );
+   my $req = HTTP::Request.new( $method, $url, $headers );
 
    if ( defined $content )
    {
-      my $u = URI->new();
-      $u->query_form($content);
-      my $query = $u->query();
-      $req->content($query);
+      my $u = URI.new();
+      $u.query_form($content);
+      my $query = $u.query();
+      $req.content($query);
    }
-   $self->log($req->as_string());
-   return $self->ua()->request($req);
+   $self.log($req.as_string());
+   return $self.ua().request($req);
 }
 
 =item get_object
@@ -420,17 +350,17 @@ sub get_object
 
    my $obj;
 
-   my $save_response_format = $self->response_format();
-   $self->response_format('json');
+   my $save_response_format = $self.response_format();
+   $self.response_format('json');
 
-   my $res = $self->get( $url, $params, $headers );
+   my $res = $self.get( $url, $params, $headers );
 
-   if ( $res->is_success() )
+   if ( $res.is_success() )
    {
-      $obj = decode_json( $res->decoded_content() );
+      $obj = decode_json( $res.decoded_content() );
    }
 
-   $self->response_format($save_response_format);
+   $self.response_format($save_response_format);
 
    return $obj;
 }
@@ -453,40 +383,40 @@ sub get_list
    my $offset   = 0;
    my $limit    = 50;
 
-   my $save_response_format = $self->response_format();
-   $self->response_format('json');
+   my $save_response_format = $self.response_format();
+   $self.response_format('json');
 
-   if ( !defined $params )
+   if ( ?^defined $params )
    {
       $params = {};
    }
    while ($continue)
    {
-      $params->{limit}  = $limit;
-      $params->{offset} = $offset;
+      $params.{'limit'}  = $limit;
+      $params.{'offset'} = $offset;
 
-      my $res = $self->get( $url, $params, $headers );
+      my $res = $self.get( $url, $params, $headers );
 
-      if ( $res->is_success() )
+      if ( $res.is_success() )
       {
-         if (defined(my $obj = $self->parse_content( $res->decoded_content())))
+         if (defined(my $obj = $self.parse_content( $res.decoded_content())))
          {
              if (defined (my $type = reftype($obj) ) )
              {
                  if ( $type eq 'ARRAY' )
                  {
                      $offset += $limit;
-                     $continue = scalar @{$obj};
+                     $continue = scalar @($obj);
                  }
                  elsif ( $type eq 'HASH' )
                  {
-                     if ( exists $obj->{collection} )
+                     if ( exists $obj.{'collection'} )
                      {
-                        if(!defined($url = $obj->{next_href}))
+                        if (?^defined($url = $obj.{'next_href'}))
                         {
                             $continue = 0;
                         }
-                        $obj = $obj->{collection};
+                        $obj = $obj.{'collection'};
                      }
                      else
                      {
@@ -497,7 +427,7 @@ sub get_list
                  {
                      croak "Unexpected $type reference instead of list";
                  }
-                  push @{$ret}, @{$obj};
+                  push @($ret), @($obj);
              }
          }
          else
@@ -507,12 +437,12 @@ sub get_list
       }
       else
       {
-         warn $res->request()->uri();
-         die $res->status_line();
+         warn $res.request().uri();
+         die $res.status_line();
       }
    }
 
-   $self->response_format($save_response_format);
+   $self.response_format($save_response_format);
 
    return $ret;
 }
@@ -529,9 +459,9 @@ This method will return HTTP::Response object
 sub get
 {
    my ( $self, $path, $params, $extra_headers ) = @_;
-   my $url = $self->_build_url( $path, $params );
-   my $headers = $self->_build_headers($extra_headers);
-   return $self->request( 'GET', $url, $headers );
+   my $url = $self._build_url( $path, $params );
+   my $headers = $self._build_headers($extra_headers);
+   return $self.request( 'GET', $url, $headers );
 }
 
 =item I<$OBJ>->post(<URL>, <CONTENT>, <HEADERS>)
@@ -546,9 +476,9 @@ This method will return HTTP::Response object
 sub post
 {
    my ( $self, $path, $content, $extra_headers ) = @_;
-   my $url     = $self->_build_url($path);
-   my $headers = $self->_build_headers($extra_headers);
-   return $self->request( 'POST', $url, $headers, $content );
+   my $url     = $self._build_url($path);
+   my $headers = $self._build_headers($extra_headers);
+   return $self.request( 'POST', $url, $headers, $content );
 }
 
 =item I<$OBJ>->put(<URL>, <CONTENT>, <HEADERS>)
@@ -563,13 +493,13 @@ This method will return HTTP::Response object
 sub put
 {
    my ( $self, $path, $content, $extra_headers ) = @_;
-   my $url = $self->_build_url($path);
+   my $url = $self._build_url($path);
 
 # Set Content-Length Header as well otherwise nginx will throw 411 Length Required ERROR
-   $extra_headers->{'Content-Length'} = 0
-     unless $extra_headers->{'Content-Length'};
-   my $headers = $self->_build_headers($extra_headers);
-   return $self->request( 'PUT', $url, $headers, $content );
+   $extra_headers.{'Content-Length'} = 0
+     unless $extra_headers.{'Content-Length'};
+   my $headers = $self._build_headers($extra_headers);
+   return $self.request( 'PUT', $url, $headers, $content );
 }
 
 =item I<$OBJ>->delete(<URL>, <PARAMS>, <HEADERS>)
@@ -584,9 +514,9 @@ send headers. This method will return HTTP::Response object
 sub delete
 {
    my ( $self, $path, $params, $extra_headers ) = @_;
-   my $url = $self->_build_url( $path, $params );
-   my $headers = $self->_build_headers($extra_headers);
-   return $self->request( 'DELETE', $url, $headers );
+   my $url = $self._build_url( $path, $params );
+   my $headers = $self._build_headers($extra_headers);
+   return $self.request( 'DELETE', $url, $headers );
 }
 
 =item I<$OBJ>->download(<TRACK_ID>, <DEST_FILE>)
@@ -600,33 +530,33 @@ be saved to. This method will return the file path of downloaded track.
 sub download
 {
    my ( $self, $trackid, $file ) = @_;
-   my $url = $self->_build_url( "/tracks/$trackid/download", {});
-   $self->log($url);
+   my $url = $self._build_url( "/tracks/$trackid/download", {});
+   $self.log($url);
 
    my $rc = 0;
    # Set Response format to */*
    # Memorize old response format
-   my $old_response_format = $self->{response_format};
-   $self->response_format('*');
-   my $headers = $self->_build_headers();
-   $self->ua()->add_handler('response_redirect',\&_our_redirect);
-   my $response = $self->request( 'GET', $url, $headers );
+   my $old_response_format = $self.{'response_format'};
+   $self.response_format('*');
+   my $headers = $self._build_headers();
+   $self.ua().add_handler('response_redirect',\&_our_redirect);
+   my $response = $self.request( 'GET', $url, $headers );
 
-   $self->ua()->remove_handler('response_redirect');
+   $self.ua().remove_handler('response_redirect');
 
-   if (!($rc = $response->is_success()))
+   if (?^($rc = $response.is_success()))
    {
 
-       $self->log($response->request()->as_string());
-       $self->log($response->as_string());
-       foreach my $red ( $response->redirects() )
+       $self.log($response.request().as_string());
+       $self.log($response.as_string());
+       for ( $response.redirects() ) -> $red
        {
-           $self->log($red->request()->as_string());
-           $self->log($red->as_string());
+           $self.log($red.request().as_string());
+           $self.log($red.as_string());
        }
    }
    # Reset response format
-   $self->{response_format} = $formats{$old_response_format};
+   $self.{'response_format'} = %formats{'$old_response_format'};
    return $rc;
 }
 
@@ -642,21 +572,21 @@ sub _our_redirect
 {
    my ( $response, $ua, $h ) = @_;
 
-   my $code = $response->code();
+   my $code = $response.code();
 
    my $req;
 
    if (_is_redirect($code) )
    {
-       my $referal =  $response->request()->clone();
-       $referal->remove_header('Host','Cookie','Referer','Authorization');
+       my $referal =  $response.request().clone();
+       $referal.remove_header('Host','Cookie','Referer','Authorization');
 
-       if (my $ref_uri = $response->header('Location'))
+       if (my $ref_uri = $response.header('Location'))
        {
-           my $uri = URI->new($ref_uri);
-           $referal->header('Host' => $uri->host());
-         $referal->uri($uri);
-         if ( $ua->redirect_ok($referal, $response) )
+           my $uri = URI.new($ref_uri);
+           $referal.header('Host' => $uri.host());
+         $referal.uri($uri);
+         if ( $ua.redirect_ok($referal, $response) )
          {
              $req = $referal;
          }
@@ -703,14 +633,14 @@ sub request_format
 
    if ($format)
    {
-      $self->{request_format} = $format;
+      $self.{'request_format'} = $format;
    }
-   elsif(!defined $self->{request_format})
+   elsif (?^defined $self.{'request_format'})
    {
-      $self->{request_format} = 'json';
+      $self.{'request_format'} = 'json';
    }
 
-   return $self->{request_format};
+   return $self.{'request_format'};
 }
 
 =item response_format
@@ -726,13 +656,13 @@ sub response_format
    my ( $self, $format ) = @_;
    if ($format)
    {
-      $self->{response_format} = $format;
+      $self.{'response_format'} = $format;
    }
-   elsif (!defined $self->{response_format})
+   elsif (?^defined $self.{'response_format'})
    {
-      $self->{response_format} = 'json';
+      $self.{'response_format'} = 'json';
    }
-   return $self->{response_format};
+   return $self.{'response_format'};
 }
 
 =item parse_content
@@ -756,15 +686,15 @@ sub parse_content
 
       eval
       {
-          if ( $self->response_format() eq 'json' )
+          if ( $self.response_format() eq 'json' )
           {
               $object = decode_json($content);
           }
-          elsif ( $self->response_format() eq 'xml' )
+          elsif ( $self.response_format() eq 'xml' )
           {
-              require XML::Simple;
-              my $xs = XML::Simple->new();
-              $object = $xs->XMLin($content);
+              require XML::Simple:from<Perl5>;
+              my $xs = XML::Simple.new();
+              $object = $xs.XMLin($content);
           }
       };
       if ( $@ )
@@ -796,21 +726,21 @@ sub _access_token
 {
    my ( $self, $params ) = @_;
    my $call     = '_access_token';
-   my $url      = $self->_access_token_url();
-   my $headers  = $self->_build_headers();
-   my $response = $self->request( 'POST', $url, $headers, $params );
+   my $url      = $self._access_token_url();
+   my $headers  = $self._build_headers();
+   my $response = $self.request( 'POST', $url, $headers, $params );
    die "Failed to fetch " 
-     . $url . " "
-     . $response->content() . " ("
-     . $response->status_line() . ")"
-     unless $response->is_success;
-   my $uri          = URI->new;
-   my $access_token = decode_json( $response->decoded_content );
+     ~ $url ~ " "
+     ~ $response.content() ~ " ("
+     ~ $response.status_line() ~ ")"
+     unless $response.is_success;
+   my $uri          = URI.new;
+   my $access_token = decode_json( $response.decoded_content );
 
    # store access_token, refresh_token
-   foreach (qw(access_token refresh_token expire expires_in))
+   for (qw (access_token refresh_token expire expires_in))
    {
-      $self->{$_} = $access_token->{$_};
+      $self.{'$_'} = $access_token.{'$_'};
    }
 
    # set access_token, refresh_token
@@ -827,7 +757,7 @@ This will be called from _access_token method.
 sub _access_token_url
 {
    my ( $self, $params ) = @_;
-   my $url = $self->_build_url( $path_for{'access_token'}, $params );
+   my $url = $self._build_url( %path_for{'access_token'}, $params );
    return $url;
 }
 
@@ -844,17 +774,17 @@ sub _build_url
 
    # get base URL
    my $base_url =
-     $self->{development} ? $domain_for{development} : $domain_for{production};
+     $self.{'development'} ?? %domain_for{'development'} !! %domain_for{'production'};
 
    #$params->{client_id} = $self->client_id();
    # Prepare URI Object
-   my $uri = URI->new_abs( $path, $base_url );
+   my $uri = URI.new_abs( $path, $base_url );
    
-   if ( $uri->query() )
+   if ( $uri.query() )
    {
-       $params = { %{$params || {}}, $uri->query_form() };
+       $params = { %($params || {}), $uri.query_form() };
    }
-   $uri->query_form( %{$params} );
+   $uri.query_form( %($params) );
    return $uri;
 }
 
@@ -867,17 +797,17 @@ This method is used to set extra headers to the current HTTP Request.
 sub _build_headers
 {
    my ( $self, $extra ) = @_;
-   my $headers = HTTP::Headers->new;
+   my $headers = HTTP::Headers.new;
 
-   $headers->header( 'Accept' => $formats{ $self->{response_format} } )
-     if ( $self->{response_format} );
-   $headers->header( 'Content-Type' => $formats{ $self->{request_format} } . '; charset=utf-8' )
-     if ( $self->{request_format} );
-   $headers->header( 'Authorization' => "OAuth " . $self->{access_token} )
-     if ( $self->{access_token} && !$extra->{no_auth});
-   foreach my $key ( %{$extra} )
+   $headers.header( 'Accept' => %formats{ '$self'.{'response_format'} } )
+     if ( $self.{'response_format'} );
+   $headers.header( 'Content-Type' => %formats{ '$self'.{'request_format'} } ~ '; charset=utf-8' )
+     if ( $self.{'request_format'} );
+   $headers.header( 'Authorization' => "OAuth " ~ $self.{'access_token'} )
+     if ( $self.{'access_token'} && ?^$extra.{'no_auth'});
+   for ( %($extra) ) -> $key
    {
-      $headers->header( $key => $extra->{$key} );
+      $headers.header( $key => $extra.{'$key'} );
    }
    return $headers;
 }
@@ -891,9 +821,9 @@ This method is used to write some text to STDERR.
 sub log
 {
    my ( $self, $msg ) = @_;
-   if ( $self->{debug} )
+   if ( $self.{'debug'} )
    {
-      print STDERR "$msg\n";
+      $*ERR~print("$msg\n");
    }
 }
 
@@ -938,4 +868,5 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1;
+}
+# vim: ft=perl6 expandtab sw=4
