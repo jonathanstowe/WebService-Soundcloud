@@ -112,117 +112,25 @@ you are using the credential based authentication to obtain the OAuth token
 (e.g if you are an application with no UI that is operating for a single
 user.) 
 
-=end pod
-
-class WebService::Soundcloud:ver<v0.0.1> {
-
-use Carp:from<Perl5>;
-use LWP::UserAgent:from<Perl5>;
-use URI:from<Perl5>;
-use JSON:from<Perl5> qw (decode_json);
-use Data::Dumper:from<Perl5>;
-use HTTP::Headers:from<Perl5>;
-use Scalar::Util:from<Perl5> qw (reftype);
-
-# declare domains
-our %domain_for = (
-   'prod'        => 'https://api.soundcloud.com/',
-   'production'  => 'https://api.soundcloud.com/',
-   'development' => 'https://api.sandbox-soundcloud.com/',
-   'dev'         => 'https://api.sandbox-soundcloud.com/',
-   'sandbox'     => 'https://api.sandbox-soundcloud.com/'
-);
-
-our $DEBUG    = 0;
-our %path_for = (
-   'authorize'    => 'connect',
-   'access_token' => 'oauth2/token'
-);
-
-our %formats = (
-   '*'    => '*/*',
-   'json' => 'application/json',
-   'xml'  => 'application/xml'
-);
-
-
-has Str $.client-id;
-has Str $.client-secret;
-has %!options;
-
-submethod BUILD(:$!client-id!, :$!client-secret!, *%options) {
-
-   %!options = %options;
-}
-
-
-method redirect-uri returns Str is rw {
-    %!options<redirect-uri>;
-}
-
-=item basic_params
+=head3 basic-params
 
 This returns a L<Hash> that is suitable to be used as the basic parameters
 in most places, containing the application credentials (ID and Secret) and
 redirect_uri
 
-=cut
-
-method basic-params() is rw {
-    my %params = (
-        client_id       => $!client_id,
-        client_secret   => $!client-secret,
-    );
-
-    if self.redirect-uri.defined {
-        %params<redirect_uri> = self.redirect-uri;
-    }
-
-    return %params;
-
-}
-
-=item ua
+=head3 ua
 
 Returns the L<LWP::UserAgent> object that will be used to connect to the
 API host
 
-=cut
 
-sub ua
-{
-    my ( $self ) = @_;
-
-    if (?^defined $self.{'user_agent'} )
-    {
-        $self.{'user_agent'} = LWP::UserAgent.new();
-    }
-
-    return $self.{'user_agent'};
-}
-
-=item get_authorization_url
+=head3 get-authorization-url
 
 This method is used to get authorization url, user should be redirected
 for authenticate from soundcloud. This will return URL to which user
 should be redirected.
 
-=cut
-
-sub get_authorization_url
-{
-   my ( $self, $args ) = @_;
-   my $call   = 'get_authorization_url';
-   my $params = $self.basic_params();
-
-   $params.{'response_type'} = 'code';
-
-   $params = { %($params), %($args) } if ref($args) eq 'HASH';
-   my $authorize_url = $self._build_url( %path_for{'authorize'}, $params );
-   return $authorize_url;
-}
-
-=item get_access_token
+=head3 get-access-token
 
 This method is used to receive access_token, refresh_token,
 scope, expires_in details from soundcloud once user is
@@ -234,53 +142,7 @@ The argument C<$code> is required unless you are using credential based
 authentication, and will have been supplied to your C<redirect_uri> after
 the user pressed "Connect" on the soundcloud connect page.
 
-=cut
-
-sub get_access_token
-{
-   my ( $self, $code, $args ) = @_;
-   my $request;
-   my $call   = 'get_access_token';
-   my $params = $self._access_token_params($code);
-
-   $params = { %($params), %($args) } if ref($args) eq 'HASH';
-   return $self._access_token($params);
-}
-
-=item _access_token_params
-
-=cut
-
-sub _access_token_params
-{
-   my ( $self, $code ) = @_;
-
-   my $params = $self.basic_params();
-
-   if ( $self.{'scope'} )
-   {
-      $params.{'scope'} = $self.{'scope'};
-   }
-   if ( $self.{'username'} && $self.{'password'} )
-   {
-      $params.{'username'}   = $self.{'username'};
-      $params.{'password'}   = $self.{'password'};
-      $params.{'grant_type'} = 'password';
-   }
-   elsif ( defined $code )
-   {
-      $params.{'code'}       = $code;
-      $params.{'grant_type'} = 'authorization_code';
-   }
-   else
-   {
-      die "neither credentials or auth code provided";
-   }
-
-   return $params;
-}
-
-=item get_access_token_refresh
+=head3 get-access-token-refresh
 
 This method is used to get new access_token by exchanging refresh_token
 before the earlier access_token is expired. You will receive new
@@ -292,22 +154,7 @@ user behalf.
 If a C<scope> of 'non-expiring' was supplied at the time the initial tokem
 was obtained then this should not be necessary.
 
-=cut
-
-sub get_access_token_refresh
-{
-   my ( $self, $refresh_token, $args ) = @_;
-
-   my $params = $self.basic_params();
-
-   $params.{'refresh_token'} = $refresh_token;
-   $params.{'grant_type'}    = 'refresh_token';
-
-   $params = { %($params), %($args) } if ref($args) eq 'HASH';
-   return $self._access_token($params);
-}
-
-=item request
+=head3 request
 
 This performs an HTTP request with the $method supplied to the supplied
 $url. The third argument $headers can be supplied to insert any required
@@ -317,53 +164,162 @@ appropriately and inserted into the request.
 An L<HTTP::Response> will be returned and this should be checked to
 determine the status of the request.
 
-=cut
-
-sub request
-{
-   my ( $self, $method, $url, $headers, $content ) = @_;
-   my $req = HTTP::Request.new( $method, $url, $headers );
-
-   if ( defined $content )
-   {
-      my $u = URI.new();
-      $u.query_form($content);
-      my $query = $u.query();
-      $req.content($query);
-   }
-   $self.log($req.as_string());
-   return $self.ua().request($req);
-}
-
-=item get_object
+=head3 get-object
 
 This returns a decoded object corresponding to the URI given
 
 It will for the response_format to 'json' for the request as
 parsing the XML is tricky given no schema.
 
-=cut
+#EOMETHS
+=end pod
 
-sub get_object
-{
-   my ( $self, $url, $params, $headers ) = @_;
+class WebService::Soundcloud:ver<v0.0.1> {
 
-   my $obj;
+    use HTTP::UserAgent;
+    use URI;
+    use JSON::Tiny;
+    #use HTTP::Headers;
 
-   my $save_response_format = $self.response_format();
-   $self.response_format('json');
+    # declare domains
+    our %domain-for = (
+        'prod'        => 'https://api.soundcloud.com/',
+        'production'  => 'https://api.soundcloud.com/',
+        'development' => 'https://api.sandbox-soundcloud.com/',
+        'dev'         => 'https://api.sandbox-soundcloud.com/',
+        'sandbox'     => 'https://api.sandbox-soundcloud.com/'
+    );
 
-   my $res = $self.get( $url, $params, $headers );
+    our $DEBUG    = False;
 
-   if ( $res.is_success() )
-   {
-      $obj = decode_json( $res.decoded_content() );
-   }
+    our %path-for = (
+        'authorize'    => 'connect',
+        'access_token' => 'oauth2/token'
+    );
 
-   $self.response_format($save_response_format);
+    our %formats = (
+        '*'    => '*/*',
+        'json' => 'application/json',
+        'xml'  => 'application/xml'
+    );
 
-   return $obj;
-}
+
+    has Str $.client-id;
+    has Str $.client-secret;
+    has %!options;
+    has Str $.redirect-uri is rw;
+    has HTTP::UserAgent $.ua is rw;
+    has Bool $!development = False;
+    has $!scope;
+    has Str $.username is rw;
+    has Str $.password is rw;
+
+    submethod BUILD(:$!client-id!, :$!client-secret!, :$!redirect-uri, :$!scope, :$!username, :$!password, :$!ua, *%opts) {
+
+        %!options = %opts;
+        if not $!ua.defined {
+            $!ua  = HTTP::UserAgent.new;
+        }
+    }
+
+
+
+    method basic-params() is rw {
+        my %params = (
+            client_id       => $!client_id,
+            client_secret   => $!client-secret,
+        );
+
+        if $!redirect-uri.defined {
+            %params<redirect_uri> = $!redirect-uri;
+        }
+
+        return %params;
+    }
+
+
+    method get-authorization-url(*%args) {
+        my $call   = 'get_authorization_url';
+        my %params = self.basic-params();
+
+        %params<response_type> = 'code';
+
+        %params =  %params, %args;
+
+        self!build-url( %path-for<authorize>, %params );
+    }
+
+
+    method get-access-token(Str $code, *%args) {
+
+        my %params = self!access-token-params($code);
+
+        %params =  %params, %args;
+        self!access-token(%params);
+    }
+
+    method !access-token-params(Str $code?) {
+        my %params = !self.basic-params();
+
+        if  $!scope.defined {
+            %params<scope> = $!scope;
+        }
+        if $!username && $!password {
+            %params<username>   = $!username;
+            %params<password>   = $!password;
+            %params<grant_type> = 'password';
+        }
+        elsif $code.defined {
+            %params<code>       = $code;
+            %params<grant_type> = 'authorization_code';
+        }
+        else {
+            die "neither credentials or auth code provided";
+        }
+        %params;
+    }
+
+
+    method get-access-token-refresh(Str $refresh-token, *%args) {
+        my %params = self.basic-params();
+
+        %params<refresh_token> = $refresh_token;
+        %params<grant_type>    = 'refresh_token';
+
+        %params =  %params, %args;
+        self!access-token(%params);
+    }
+
+
+    method request($method, $url, %headers, $content?) returns HTTP::Response {
+        my $req = HTTP::Request.new( $method, $url, %headers );
+
+        if $content.defined {
+            my $u = URI.new();
+            $u.query_form($content);
+            my $query = $u.query();
+            $req.content($query);
+        }
+        $self.log($req.as_string());
+        $!ua.request($req);
+    }
+
+
+    method get-object($url, %params, %headers ) {
+        my $obj;
+
+        my $save_response_format = $!response-format;
+        $!response-format = 'json';
+
+        my HTTP::Response $res = self.get( $url, %params, %headers );
+
+        if  $res.is-success {
+            $obj = from-json( $res.decoded-content );
+        }
+
+        $!response-format = $save_response_format;
+        $obj;
+    }
 
 =item get_list
 
@@ -767,14 +723,10 @@ This method is used to prepare absolute URL for a given path and request paramet
 
 =cut
 
-sub _build_url
-{
-   my ( $self, $path, $params ) = (@_);
-   my $call = '_build_url';
+method !build-url(Str $path, *%params) {
 
    # get base URL
-   my $base_url =
-     $self.{'development'} ?? %domain_for{'development'} !! %domain_for{'production'};
+   my $base_url = $!development ?? %domain_for<development> !! %domain_for<production>;
 
    #$params->{client_id} = $self->client_id();
    # Prepare URI Object
