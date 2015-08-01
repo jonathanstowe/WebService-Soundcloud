@@ -292,7 +292,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
     has %!auth-details;
     has Bool $!debug = False;
 
-    submethod BUILD(:$!client-id!, :$!client-secret!, :$!redirect-uri, :$!scope, :$!username, :$!password, :$!ua, *%opts) {
+    submethod BUILD(:$!client-id!, :$!client-secret!, :$!redirect-uri, :$!scope, Str :$!username, Str :$!password, HTTP::UserAgent :$!ua, *%opts) {
 
         %!options = %opts;
         if not $!ua.defined {
@@ -324,7 +324,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
 
         %params =  %params, %args;
 
-        self!build-url( %path-for<authorize>, %params );
+        self!build-url( %path-for<authorize>, |%params );
     }
 
 
