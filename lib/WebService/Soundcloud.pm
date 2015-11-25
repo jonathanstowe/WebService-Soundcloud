@@ -139,7 +139,7 @@ be sent along with every request to access private resources on the
 user behalf.
 
 The argument C<$code> is required unless you are using credential based
-authentication, and will have been supplied to your C<redirect_uri> after
+authentication, and will have been supplied to your C<redirect-uri> after
 the user pressed "Connect" on the soundcloud connect page.
 
 =head3 get-access-token-refresh
@@ -253,7 +253,15 @@ class WebService::Soundcloud:ver<v0.0.1> {
     use HTTP::UserAgent;
     use URI;
     use JSON::Tiny;
+    use URI::Template;
     #use HTTP::Headers;
+    #
+
+    class X::NoAuthDetails is Exception {
+        method message() {
+            "neither credentials or auth code provided";
+        }
+    }
 
     # declare domains
     our %domain-for = (
@@ -289,10 +297,10 @@ class WebService::Soundcloud:ver<v0.0.1> {
     has Str $.password is rw;
     has Str $.response-format is rw = 'json';
     has Str $.request-format is rw = 'json';
-    has %!auth-details;
+    has %.auth-details;
     has Bool $!debug = False;
 
-    submethod BUILD(:$!client-id!, :$!client-secret!, :$!redirect-uri, :$!scope, Str :$!username, Str :$!password, HTTP::UserAgent :$!ua, *%opts) {
+    submethod BUILD(Str :$!client-id!, Str :$!client-secret!, Str :$!redirect-uri, Str :$!scope, Str :$!username, Str :$!password, HTTP::UserAgent :$!ua, *%opts) {
 
         %!options = %opts;
         if not $!ua.defined {
@@ -302,7 +310,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
 
 
 
-    method basic-params() is rw {
+    method !basic-params() is rw {
         my %params = (
             client_id       => $!client-id,
             client_secret   => $!client-secret,
@@ -318,17 +326,17 @@ class WebService::Soundcloud:ver<v0.0.1> {
 
     method get-authorization-url(*%args) {
         my $call   = 'get_authorization_url';
-        my %params = self.basic-params();
+        my %params = self!basic-params();
 
         %params<response_type> = 'code';
 
-        %params =  %params, %args;
+        %params.push: %args.pairs;
 
-        self!build-url( %path-for<authorize>, |%params );
+        self!build-url( %path-for<authorize>, %params );
     }
 
 
-    method get-access-token(Str $code, *%args) {
+    method get-access-token(Str $code?, *%args) {
 
         my %params = self!access-token-params($code);
 
@@ -337,7 +345,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
     }
 
     method !access-token-params(Str $code?) {
-        my %params = !self.basic-params();
+        my %params = self!basic-params();
 
         if  $!scope.defined {
             %params<scope> = $!scope;
@@ -352,7 +360,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
             %params<grant_type> = 'authorization_code';
         }
         else {
-            die "neither credentials or auth code provided";
+            X::NoAuthDetails.new.throw;
         }
         %params;
     }
@@ -369,12 +377,14 @@ class WebService::Soundcloud:ver<v0.0.1> {
     }
 
 
-    method request($method, $url, %headers, $content?) returns HTTP::Response {
-        my $req = HTTP::Request.new( $method, $url, %headers );
+    method request(Str $method, URI $url, HTTP::Header $headers, %content?) returns HTTP::Response {
+        my $req = HTTP::Request.new( $method, $url, $headers );
 
-        if $content.defined {
+        say $req.Str;
+
+        if %content.keys.elems {
             my $u = URI.new();
-            $u.query_form($content);
+            $u.query_form(%content);
             my $query = $u.query();
             $req.content($query);
         }
@@ -400,7 +410,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
     }
 
 
-    method get-list($url, %params, %headers) {
+    method get-list($url, %params?, %headers?) {
         my @ret;
         my Bool $continue = True;
         my Int $offset   = 0;
@@ -449,17 +459,17 @@ class WebService::Soundcloud:ver<v0.0.1> {
         @ret;
     }
 
-    method get( Str $path, %params, %extra_headers ) {
+    method get( Str $path, %params?, %extra_headers? ) {
         my $url = self!build-url( $path, %params );
-        my %headers = self!build-headers(%extra_headers);
-        self.request( 'GET', $url, %headers );
+        my HTTP::Header $headers = self!build-headers(%extra_headers);
+        self.request( 'GET', $url, $headers );
     }
 
 
     method post(Str $path, $content, %extra_headers ) {
         my $url     = self!build-url($path);
-        my %headers = self!build-headers(%extra_headers);
-        self.request( 'POST', $url, %headers, $content );
+        my HTTP::Header $headers = self!build-headers(%extra_headers);
+        self.request( 'POST', $url, $headers, $content );
     }
 
 
@@ -571,7 +581,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
             die "Failed to fetch " 
                 ~ $url ~ " "
                 ~ $response.content() ~ " ("
-                ~ $response.status_line() ~ ")"
+                ~ $response.status-line() ~ ")"
         }
         my $uri          = URI.new;
         my $access_token = from-json( $response.content );
@@ -590,20 +600,48 @@ class WebService::Soundcloud:ver<v0.0.1> {
         self!build-url( %path-for<access_token>, %params );
     }
 
-    method !build-url(Str $path, *%params) {
+    has $!query-template = URI::Template.new(template => '{?query*}');
+
+    method !build-url(Str $path, %params?) {
         my $base_url = $!development ?? %domain-for<development> !! %domain-for<production>;
 
-        my $uri = URI.new_abs( $path, $base_url );
-   
-        if  $uri.query.defined {
-            %params = %params,$uri.query-form();
+        my Bool $b-slash = ?($base_url ~~ /\/$$/);
+        my Bool $p-slash = ?($path ~~ /^^\//);
+
+        my $abs-url = do if $p-slash {
+            if $b-slash {
+                $base_url ~ $path.substr(1);
+            }
+            else {
+                $base_url ~ $path;
+            }
         }
-        $uri.query_form( %params );
+        else {
+            if $b-slash {
+                $base_url ~ $path;
+            }
+            else {
+                $base_url ~ '/' ~ $path;
+            }
+        }
+
+        my $uri = URI.new( $abs-url );
+   
+        my $url-noq = $uri.Str.subst(/\?.*/,"");
+
+        if  $uri.query.defined {
+            %params.push: $uri.query-form().pairs;
+        }
+        $abs-url = $url-noq ~ $!query-template.process(query => %params);
+
+        $uri = URI.new($abs-url);
+
+
         $uri;
     }
 
 
-    method !build-headers(*%extra) returns HTTP::Header {
+    method !build-headers(%extra?) returns HTTP::Header {
         my $headers = HTTP::Header.new;
 
         if $!response-format.defined {
@@ -613,7 +651,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
             $headers.field( Content-Type => %formats{ $!request-format } ~ '; charset=utf-8' );
         }
         if %!auth-details<access_token>.defined && not %extra<no_auth>:exists {
-            $headers.field( 'Authorization' => "OAuth " ~ %!auth-details<access_token> );
+            $headers.field( Authorization => "OAuth " ~ %!auth-details<access_token> );
         }
         for  %extra.kv -> $key, $value {
             $headers.field( $key => $value );
