@@ -13,11 +13,11 @@ my $password = %*ENV{'SC_PASSWORD'};
 
 if (defined $username && defined $password)
 {
-    plan 10;
+    plan 7;
 }
 else
 {
-    plan 10;
+    plan 7;
     skip-rest 'No $SC_USERNAME or $SC_PASSWORD defined';
     exit(0);
 }
@@ -38,10 +38,10 @@ ok(my $sc = WebService::Soundcloud.new( :$client-id, :$client-secret,|%args),"ne
 
 ok(my $token = $sc.get-access-token(), "get access token - no code needed");
 ok(my $me = $sc.get-object('/me'), "get_object - /me");
-ok($me.{'permalink'}, "and the data has something in it");
+ok($me{'permalink'}, "and the data has something in it");
 ok(my $tracks = $sc.get-list('/me/tracks'), 'get_list - "/me/tracks"');
-ok(@($tracks), "and we got some tracks");
-is(@($tracks), $me.{'track_count'}, "and the same as the number on the me");
+ok(?$tracks.elems, "and we got some tracks");
+is($tracks.elems, $me{'track_count'}, "and the same as the number on the me");
 
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6

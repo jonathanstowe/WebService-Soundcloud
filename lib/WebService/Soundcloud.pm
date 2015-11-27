@@ -340,7 +340,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
 
         my %params = self!access-token-params($code);
 
-        %params =  %params, %args;
+        %params.push: %args.pairs;
         self!access-token(%params);
     }
 
@@ -380,20 +380,15 @@ class WebService::Soundcloud:ver<v0.0.1> {
     method request(Str $method, URI $url, HTTP::Header $headers, %content?) returns HTTP::Response {
         my $req = HTTP::Request.new( $method, $url, $headers );
 
-        say $req.Str;
-
         if %content.keys.elems {
-            my $u = URI.new();
-            $u.query_form(%content);
-            my $query = $u.query();
-            $req.content($query);
+            $req.add-form-data(%content);
         }
         self.log($req);
         $!ua.request($req);
     }
 
 
-    method get-object($url, %params, %headers ) {
+    method get-object($url, %params?, %headers? ) {
         my $obj;
 
         my $save_response_format = $!response-format;
@@ -444,7 +439,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
                     else {
                         die "Unexpected { $obj.WHAT } reference instead of list";
                     }
-                    @ret.push($obj);
+                    @ret.append($obj.list);
                 }
                 else {
                     $continue = False;
@@ -575,6 +570,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
         my $call     = '_access_token';
         my $url      = self!access-token-url();
         my $headers  = self!build-headers();
+        $headers.remove-field('Content-Type');
         my $response = self.request( 'POST', $url, $headers, %params );
 
         if ! $response.is-success() {
