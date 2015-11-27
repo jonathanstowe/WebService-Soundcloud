@@ -34,10 +34,10 @@ Version 0.0.1
     my $code = $q->param('code');
     
     # Get Access Token
-    my $access_token = $scloud->get_access_token($code);
+    my $access_token = $scloud.get-access-token($code);
     
     # Save access_token and refresh_token, expires_in, scope for future use
-    my $oauth_token = $access_token->{access_token};
+    my $oauth_token = $access_token<access_token>;
     
     # OAuth Dance is completed :-) Have fun now.
 
@@ -383,7 +383,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
         if %content.keys.elems {
             $req.add-form-data(%content);
         }
-        self.log($req);
+        self.log($req.Str);
         $!ua.request($req);
     }
 
@@ -492,10 +492,11 @@ class WebService::Soundcloud:ver<v0.0.1> {
         # Memorize old response format
         my $old_response_format = $!response-format;
         $!response-format = '*';
-        my %headers = self!build-headers();
+        my $headers = self!build-headers();
         #$self.ua().add_handler('response_redirect',\&_our_redirect);
-        my $response = self.request( 'GET', $url, %headers );
+        my $response = self.request( 'GET', $url, $headers );
 
+        say $response.Str;
         #$self.ua().remove_handler('response_redirect');
 
         if !($rc = $response.is_success()) {
@@ -572,6 +573,8 @@ class WebService::Soundcloud:ver<v0.0.1> {
         my $headers  = self!build-headers();
         $headers.remove-field('Content-Type');
         my $response = self.request( 'POST', $url, $headers, %params );
+
+        say $response.Str;
 
         if ! $response.is-success() {
             die "Failed to fetch " 
