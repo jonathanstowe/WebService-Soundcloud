@@ -20,6 +20,7 @@
     "URI",
     "URI::Template",
     "HTTP::UserAgent", 
+    "IO::Socket::SSL",
     "JSON::Class", 
     "JSON::Name" 
   ],
