@@ -1,9 +1,13 @@
-#!/usr/bin/perl
+#!perl6
 
-use Test::More tests => 1;
+use v6;
 
-BEGIN {
-    use_ok( 'WebService::Soundcloud' ) || print "Bail out!\n";
-}
+use lib 'lib';
+use Test;
 
-diag( "Testing WebService::Soundcloud $WebService::Soundcloud::VERSION, Perl $], $^X" );
+use-ok('WebService::Soundcloud', 'can load WebService::Soundcloud');
+use-ok('WebService::Soundcloud::User', 'can load WebService::Soundcloud::User');
+
+
+done-testing;
+# vim: expandtab shiftwidth=4 ft=perl6
