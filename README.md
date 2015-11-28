@@ -1,4 +1,4 @@
-# WebService::Soundcloud
+# WebService::Soundcloud [![Build Status](https://travis-ci.org/jonathanstowe/WebService-Soundcloud.svg?branch=master)](https://travis-ci.org/jonathanstowe/WebService-Soundcloud)
 
 Provide a Perl 6 interface to the Soundcloud REST API.
 
