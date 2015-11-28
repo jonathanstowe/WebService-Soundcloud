@@ -4,11 +4,7 @@ use v6;
 
 =head1 NAME
 
-WebService::Soundcloud - Thin wrapper around Soundcloud RESTful API!
-
-=head1 VERSION
-
-Version 0.0.1
+WebService::Soundcloud - Provide access to the Soundcloud API
 
 =head1 SYNOPSIS
 
@@ -65,43 +61,49 @@ Version 0.0.1
 
 =head1 DESCRIPTION
 
-This module provides a wrapper around Soundcloud RESTful API to work with 
+This module provides a wrapper around Soundcloud REST API to work with 
 different kinds of soundcloud resources. It contains many functions for 
-convenient use rather than standard Soundcloud RESTful API.
+convenient use rather than standard Soundcloud REST API.
 
-The complete API is documented at http://developers.soundcloud.com/docs.
+The complete API is documented at L<http://developers.soundcloud.com/docs>.
 
 In order to use this module you will need to register your application
-with Soundcloud at http://soundcloud.com/you/apps : your application will
+with Soundcloud at L<http://soundcloud.com/you/apps> : your application will
 be given a client ID and a client secret which you will need to use to 
-connect.
+connect. The client ID used in the tests will not work correctly for your
+own application as the callback URI is set to 'localhost'.
 
 =head2 METHODS
 
+=head3 method new
 
-=head3 new
+    method new(Str :$!client-id!, Str :$!client-secret!, Str :$!redirect-uri, Str :$!scope, Str :$!username, Str :$!password, HTTP::UserAgent :$!ua )
 
 Returns a newly created C<WebService::Soundcloud> object. The first
 named argument is client-id, the second argument is client-secret - these
 are required and will have been provided when you registered your
-application with Soundcloud. 
+application with Soundcloud. If C<username> and C<password> are provided then
+credentials based authentication will be performed.
 
-=head3 client-id
+An optional L<HTTP::UserAgent> can be passed if there is some requirement
+for special configuration that isn't allowed for.
+
+=head3 method client-id
 
 Accessor for the Client ID that was provided when you registered your
 application.
 
 
-=head3 client-secret
+=head3 method client-secret
 
 Accessor for the Client Secret that was provided when you registered
 your application.
 
-=head3 redirect-uri
+=head3 method redirect-uri
 
-Accessor for the redirect_uri this can be passed as an option to the
-constructor or supplied later (before any connect call.) This should
-match to that provided when you registered your application.
+Accessor for the redirect-uri this can be passed as an option to the
+constructor or supplied later (before any connect call.) This must
+match that provided when you registered your application.
 
 This can be supplied as an option to the constructor.
 
@@ -112,29 +114,37 @@ you are using the credential based authentication to obtain the OAuth token
 (e.g if you are an application with no UI that is operating for a single
 user.) 
 
-=head3 basic-params
+=head3 method basic-params
 
 This returns a L<Hash> that is suitable to be used as the basic parameters
 in most places, containing the application credentials (ID and Secret) and
-redirect_uri
+redirect-uri
 
-=head3 ua
+=head3 method ua
 
-Returns the L<LWP::UserAgent> object that will be used to connect to the
+Returns the L<HTTP::UserAgent> object that will be used to connect to the
 API host
 
 
-=head3 get-authorization-url
+=head3 method get-authorization-url
 
-This method is used to get authorization url, user should be redirected
-for authenticate from soundcloud. This will return URL to which user
-should be redirected.
+    method get-authorization-url(*%args)
 
-=head3 get-access-token
+This method is used to get the authorization ("connect") uri which the
+user should be redirected to authenticate with soundcloud and indicate
+they permit the connection to your application. This will return the
+URL to which user should be redirected.
 
-This method is used to receive access_token, refresh_token,
-scope, expires_in details from soundcloud once user is
-authenticated. access_token, refresh_token should be stored as it should
+Any additional named style arguments will be appended as query parameters
+to the URI.
+
+=head3 method get-access-token
+
+    method get-access-token(Str $code?, *%args) returns Hash
+
+This method is used to receive access-token, refresh-token,
+scope and expires-in details from Soundcloud once the user is
+authenticated. access-token, refresh-token should be stored as it should
 be sent along with every request to access private resources on the
 user behalf.
 
@@ -142,9 +152,11 @@ The argument C<$code> is required unless you are using credential based
 authentication, and will have been supplied to your C<redirect-uri> after
 the user pressed "Connect" on the soundcloud connect page.
 
-=head3 get-access-token-refresh
+=head3 method get-access-token-refresh
 
-This method is used to get new access_token by exchanging refresh_token
+    method get-access-token-refresh(Str $refresh-token, *%args)
+
+This method is used to get a new access_token by exchanging refresh_token
 before the earlier access_token is expired. You will receive new
 access_token, refresh_token, scope and expires_in details from
 soundcloud. access_token, refresh_token should be stored as it should
@@ -154,7 +166,9 @@ user behalf.
 If a C<scope> of 'non-expiring' was supplied at the time the initial tokem
 was obtained then this should not be necessary.
 
-=head3 request
+=head3 method request
+
+    method request(Str $method, URI $url, HTTP::Header $headers, %content?) returns HTTP::Response
 
 This performs an HTTP request with the $method supplied to the supplied
 $url. The third argument $headers can be supplied to insert any required
@@ -164,98 +178,107 @@ appropriately and inserted into the request.
 An L<HTTP::Response> will be returned and this should be checked to
 determine the status of the request.
 
-=head3 get-object
+=head3 method get-object
 
-This returns a decoded object corresponding to the URI given
+    method get-object($url, %params?, %headers? )
 
-It will for the response_format to 'json' for the request as
-parsing the XML is tricky given no schema.
+This returns a decoded object corresponding to the URI. C<%params> is
+a L<Hash> of query parameters that will be added to the request URI,
+C<%headers> provides a set of additional header fields that will be
+added to the request.
 
-=head3 get-list
+=head3 method get-list
 
-This returns an L<Array> of the list method specified by URI
+    method get-list($url, %params?, %headers?)
 
-Currently this will force response_format to 'json' as parsin the XML
-is tricky without a schema.
+This returns an L<Array> of the list method specified by URI.  C<%params>
+is a L<Hash> of query parameters that will be added to the request URI,
+C<%headers> provides a set of additional header fields that will be added
+to the request.
 
-=item get(<URL>, <PARAMS>, <HEADERS>)
+=item method get
 
-This method is used to dispatch GET request on the give URL(first argument).
-second argument is an anonymous hash request parameters to be send along with GET request.
-The third optional argument(<HEADERS>) is used to send headers. 
-This method will return HTTP::Response object
+    method get( Str $path, %params?, %extra_headers? )
 
 
-=head3 I<$OBJ>->post(<URL>, <CONTENT>, <HEADERS>)
+This method is used to dispatch GET request on the give URL(first
+argument).  second argument is a L<Hash> of request parameters to be
+send along with GET request.  The third optional argument
+is used to add headers.  This method will return a L<HTTP::Response> object.
 
-This method is used to dispatch POST request on the give URL(first argument).
-second argument is the content to be posted to URL.
-The third optional argument(<HEADERS>) is used to send headers.
-This method will return HTTP::Response object
 
-=head3 I<$OBJ>->put(<URL>, <CONTENT>, <HEADERS>)
+=head3 method post
 
-This method is used to dispatch PUT request on the give URL(first argument).
-second argument is the content to be sent to URL.
-The third optional argument(<HEADERS>) is used to send headers.
-This method will return HTTP::Response object
+    method post(Str $path, $content, %extra_headers? )
 
-=head3 I<$OBJ>->delete(<URL>, <PARAMS>, <HEADERS>)
+This method is used to make a POST request on the given path.  The second
+argument is the content to be posted to URL.  The third optional argument
+are additional headers to be added to the request.  This method will
+return a L<HTTP::Response> object.
 
-This method is used to dispatch DELETE request on the give URL(first argument).
-second optional argument is an anonymous hash request parameters to be send 
-along with DELETE request. The third optional argument(<HEADERS>) is used to 
-send headers. This method will return HTTP::Response object
+=head3 method put
 
-=item I<$OBJ>->download(<TRACK_ID>, <DEST_FILE>)
+    method put( Str $path, $content, %extra_headers? )
+
+This method is used to dispatch PUT request to the given URL second
+argument is the content to be sent to URL.  The third optional argument is
+a set of aditional headers that will be added to the request.  This method
+returns a  L<HTTP::Response> object.
+
+=head3 method delete
+
+    method delete(Str $path, %params?, %extra_headers? )
+
+This method is used to dispatch DELETE request to the given URL the
+second argument is a L<Hash> of request parameters to be sent along
+with the DELETE request. Any additional named style parameters will be
+added to the headers of the request to be sent.  This method returns a
+L<HTTP::Response> object
+
+=item method download
 
 This method is used to download a particular track id given as first argument.
 second argument is name of the destination path where the downloaded track will 
 be saved to. This method will return the file path of downloaded track.
 
-=head3 request-format
+=head3 method request-format
 
-Accessor for the request format to be used.  Acceptable values are 'json' and
-'xml'.  The default is 'json'.
+Accessor for the request format to be used.  The default is 'json' which 
+should be suitable for all applications. If the format is set to something
+which Soundcloud can't deal with there will be a "406" ("Not acceptable")
+response from the API.
 
-=head3 response-format
+=head3 method response-format
 
-Accessor for the response format to be used.  The allowed values are 'json'
-and 'xml'.  The default is 'json'.  This will cause the appropriate setting
-of the Accept header in requests.
+Accessor for the response format to be used. The default is 'json'.
+If the format is set to something which Soundcloud can't deal with there
+will be a "406" ("Not acceptable") response from the API.
 
-=head3 parse_content
+
+=head3 method parse-content
+
+    method parse-content(Str $content)
 
 This will return the parsed object corresponding to the response content
-passed as asn argument.  It will select the appropriate parser based on the
-value of 'response_format'.
+passed as an argument.  Currently only JSON data is parsed.
 
 It will return undef if there is a problem with the parsing.
 
-=head3 _our_redirect
+=head3 method log
 
-This subroutime is intended to be used as a callback on 'response_redirect'
-It processes the response to make a new request for the redirect with the
-Authorization header removed so that EC3 doesn't get confused.
+    method log(Str() $msg)
 
-=head3 _is_redirect
-
-Helper subroutine to determine if the code indicates a redirect.
-
-=head3 I<$OBJ>->log(<MSG>)
-
-This method is used to write some text to STDERR.
+This method is used to write some text to $*ERR if C<debug> is a true
+value.
 
 =end pod
 
-class WebService::Soundcloud:ver<v0.0.1> {
+class WebService::Soundcloud:ver<v0.0.1>:auth<github:jonathanstowe> {
 
     use HTTP::UserAgent;
     use URI;
     use JSON::Tiny;
     use URI::Template;
-    #use HTTP::Headers;
-    #
 
     class X::NoAuthDetails is Exception {
         method message() {
@@ -488,8 +511,7 @@ class WebService::Soundcloud:ver<v0.0.1> {
         self.log($url);
 
         my Bool $rc = False;
-        # Set Response format to */*
-        # Memorize old response format
+
         my $old_response_format = $!response-format;
         $!response-format = '*';
         my $headers = self!build-headers();
@@ -582,7 +604,6 @@ class WebService::Soundcloud:ver<v0.0.1> {
                 ~ $response.content() ~ " ("
                 ~ $response.status-line() ~ ")"
         }
-        my $uri          = URI.new;
         my $access_token = from-json( $response.content );
 
         # store access_token, refresh_token
