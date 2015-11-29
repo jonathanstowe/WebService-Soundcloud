@@ -28,7 +28,6 @@ my $client-id = 'a1afc8eb1cbb96b787a5fb5232a8b4f6';
 my $client-secret = 'd78d89f377b28d9f2a2692a14a55c501';
 
 my %args = ( 
-               redirect_uri => 'http://localhost/soundcloud/connect',
                scope         => 'non-expiring',
                username      => $username,
                password      => $password
