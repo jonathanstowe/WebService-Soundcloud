@@ -239,7 +239,9 @@ with the DELETE request. Any additional named style parameters will be
 added to the headers of the request to be sent.  This method returns a
 L<HTTP::Response> object
 
-=item method download
+=head3 method download
+
+** NOT YET IMPLEMENTED **
 
 This method is used to download a particular track id given as first argument.
 second argument is name of the destination path where the downloaded track will 
@@ -511,6 +513,7 @@ class WebService::Soundcloud:ver<v0.0.1>:auth<github:jonathanstowe> {
 
 
     method download( $trackid, $file ) {
+        X::NYI.new(feature => "download").throw();
         my $url = self!build-url( "/tracks/$trackid/download");
         self.log($url);
 
