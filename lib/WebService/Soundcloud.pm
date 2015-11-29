@@ -31,17 +31,17 @@ You can use the Full OAuth flow:
     my $oauth_token = $access_token<access_token>;
     
     # a GET request '/me' - gets users details
-    my $user = $scloud->get('/me');
+    my $user = $scloud.get('/me');
     
     # a PUT request '/me' - updated users details
-    my $user = $scloud->put('/me', to-json( { user => { description => 'Have fun with Perl wrapper to Soundcloud API' } } ) );
+    my $user = $scloud.put('/me', to-json( { user => { description => 'Have fun with Perl wrapper to Soundcloud API' } } ) );
                 
     # Comment on a Track POSt request usage
-    my $comment = $scloud->post('/tracks/<track_id>/comments', 
+    my $comment = $scloud.post('/tracks/<track_id>/comments', 
                             { body => 'I love this hip-hop track' } );
     
     # Delete a track
-    my $track = $scloud->delete('/tracks/{id}');
+    my $track = $scloud.delete('/tracks/{id}');
     
 =end code
 
