@@ -8,7 +8,10 @@ WebService::Soundcloud - Provide access to the Soundcloud API
 
 =head1 SYNOPSIS
 
-    #!/usr/bin/perl6
+You can use the Full OAuth flow:
+
+=begin code
+
     use WebService::Soundcloud;
     
     my $scloud = WebService::Soundcloud.new(:$client-id, :$client-secret, redirect-uri => 'http://mydomain.com/callback' );
@@ -16,37 +19,22 @@ WebService::Soundcloud - Provide access to the Soundcloud API
     # Now get authorization url
     my $authorization_url = $scloud.get-authorization-url();
     
-    # Redirect the user to authorization url
-    use CGI;
-    my $q = new CGI;
-    $q->redirect($authorization_url);
+    # Now your appplication should redirect the user to the authorization uri
+    # When the User has authenticated and approved the connection they will
+    # in turn be redirected back to your redirect URI with either the grant code
+    # (as code) or an error (as error) as query parameters
     
-    # In your '/callback' handler capture code params
-    # Check for error
-    if ($q->param(error)) {
-    	die "Authorization Failed: ". $q->param('error');
-    }
-    # Get authorization code
-    my $code = $q->param('code');
-    
-    # Get Access Token
+    # Get Access Token with the code provided as query parameter to the redirect
     my $access_token = $scloud.get-access-token($code);
     
     # Save access_token and refresh_token, expires_in, scope for future use
     my $oauth_token = $access_token<access_token>;
     
-    # OAuth Dance is completed :-) Have fun now.
-
-    # Default request and response formats are 'json'
-    
     # a GET request '/me' - gets users details
     my $user = $scloud->get('/me');
     
     # a PUT request '/me' - updated users details
-    my $user = $scloud->put('/me', encode_json(
-                { 'user' => {
-                  'description' => 'Have fun with Perl wrapper to Soundcloud API'
-                } } ) );
+    my $user = $scloud->put('/me', to-json( { user => { description => 'Have fun with Perl wrapper to Soundcloud API' } } ) );
                 
     # Comment on a Track POSt request usage
     my $comment = $scloud->post('/tracks/<track_id>/comments', 
@@ -55,8 +43,24 @@ WebService::Soundcloud - Provide access to the Soundcloud API
     # Delete a track
     my $track = $scloud->delete('/tracks/{id}');
     
-    # Download a track
-    my $file_path = $scloud->download('<track_id>', $dest_file);
+=end code
+
+or you can use direct credential based authorisation that can skip the redirections:
+
+=begin code
+
+    use WebService::Soundcloud;
+
+
+    my $sc = WebService::Soundcloud.new(:$client-id,:$client-secret,:$username,:$password);
+
+    # Because the credentials were provided  the access-token can be requested directly
+    # without the need for a grant code
+    my $token = $sc.get-access-token();
+    my $me = $sc.get-object('/me');
+    my $tracks = $sc.get-list('/me/tracks');
+
+=end code
 
 
 =head1 DESCRIPTION
