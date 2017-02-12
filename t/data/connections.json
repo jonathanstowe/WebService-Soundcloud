@@ -1,0 +1,42 @@
+[
+  {
+    "created_at": "2010/12/05 16:46:34 +0000",
+    "display_name": "a facebook artist page",
+    "id": 313104,
+    "post_favorite": false,
+    "post_publish": false,
+    "service": "facebook_page",
+    "type": "facebook_page",
+    "uri": "https://api.soundcloud.com/connections/313104"
+  },
+  {
+    "created_at": "2010/12/04 02:28:32 +0000",
+    "display_name": "mytwittername",
+    "id": 310235,
+    "post_favorite": false,
+    "post_publish": false,
+    "service": "twitter",
+    "type": "twitter",
+    "uri": "https://api.soundcloud.com/connections/310235"
+  },
+  {
+    "created_at": "2010/12/04 02:28:11 +0000",
+    "display_name": "First and last name",
+    "id": 310234,
+    "post_favorite": false,
+    "post_publish": false,
+    "service": "facebook_profile",
+    "type": "facebook_profile",
+    "uri": "https://api.soundcloud.com/connections/310234"
+  },
+  {
+    "created_at": "2010/03/31 14:55:59 +0000",
+    "display_name": "My Myspace Name",
+    "id": 105941,
+    "post_favorite": false,
+    "post_publish": false,
+    "service": "myspace",
+    "type": "myspace",
+    "uri": "https://api.soundcloud.com/connections/105941"
+  }
+]
