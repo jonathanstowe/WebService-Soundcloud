@@ -285,12 +285,152 @@ class WebService::Soundcloud:ver<0.0.8>:auth<github:jonathanstowe>:api<1.0> {
     use URI;
     use JSON::Fast;
     use URI::Template;
+    use JSON::Name;
+    use JSON::Class;
 
     class X::NoAuthDetails is Exception {
         method message( --> Str ) {
             "neither credentials or auth code provided";
         }
     }
+
+
+
+    class User does JSON::Class {
+        has Int     $.id;
+        has Str     $.username;
+        has Str     $.full-name                 is json-name('full_name');
+        has Str     $.description;
+        has Str     $.city;
+        has Str     $.country;
+        has Str     $.uri;
+        has Str     $.permalink;
+        has Str     $.permalink-url             is json-name('permalink_url');
+        has Str     $.website;
+        has Str     $.website-title             is json-name('website_title');
+        has Str     $.myspace-name              is json-name('myspace_name');
+        has Str     $.discogs-name              is json-name('discogs_name');
+        has Int     $.track-count               is json-name('track_count');
+        has Int     $.playlist-count            is json-name('playlist_count');
+        has Int     $.public-favorites-count    is json-name('public_favourites_count');
+        has Int     $.followings-count          is json-name('followings_count');
+        has Int     $.followers-count           is json-name('followers_count');
+        has Bool    $.online;
+    }
+
+
+    class Track does JSON::Class {
+        has Int     $.id;
+        has Str     $.uri;
+        has Str     $.video-url                 is json-name('video_url');
+        has Str     $.title;
+        has Str     $.permalink-url             is json-name('permalink_url');
+        has Str     $.waveform-url              is json-name('waveform_url');
+        has Str     $.download-url              is json-name('download_url');
+        has Str     $.attachments-uri           is json-name('attachments_uri');
+        has Str     $.created-at                is json-name('created_at');
+        has Bool    $.commentable;
+        has Bool    $.streamable;
+        has Str     $.genre;
+        has Str     $.original-format           is json-name('original_format');
+        has Int     $.download-count            is json-name('download_count');
+        has Str     $.tag-list                  is json-name('tag_list');
+        has Str     $.isrc;
+        has Int     $.bpm;
+        has Int     $.original-content-size     is json-name('original_content_size');
+        has Int     $.playback-count            is json-name('playback_count');
+        has Int     $.favoritings-count         is json-name('favoritings_count');
+        has Str     $.release;
+        has Int     $.release-day               is json-name('release_day');
+        has Int     $.release-month             is json-name('release_month');
+        has Int     $.release-year              is json-name('release_year');
+        has Str     $.description;
+        has Int     $.label-id                  is json-name('label_id');
+        has Str     $.key-signature             is json-name('key_signature');
+        has Str     $.license;
+        has Int     $.user-id                   is json-name('user_id');
+        has Str     $.sharing;
+        has Str     $.label-name                is json-name('label_name');
+        has Str     $.artwork-url               is json-name('artwork_url');
+        has Int     $.duration;
+        has Str     $.state;
+        has Str     $.permalink;
+        has Bool    $.downloadable;
+        has Str     $.purchase-url              is json-name('purchase_url');
+        has Str     $.track-type                is json-name('track_type');
+        has User    $.user;
+        has Str     $.stream-url                is json-name('stream_url');
+        has Int     $.comment-count             is json-name('comment_count');
+    }
+
+    class Playlist does JSON::Class {
+        has Int     $.id;
+        has Str     $.title;
+        has Str     $.description;
+        has Str     $.uri;
+        has Int     $.track-count       is json-name('track_count');
+        has Str     $.purchase-title    is json-name('purchase_title');
+        has Str     $.permalink-url     is json-name('permalink_url');
+        has Str     $.created-at        is json-name('created_at');
+        has Bool    $.streamable;
+        has Str     $.genre;
+        has Str     $.tag-list          is json-name('tag_list');
+        has Str     $.playlist-type     is json-name('playlist_type');
+        has Str     $.release;
+        has Int     $.release-month     is json-name('release_month');
+        has Int     $.release-day       is json-name('release_day');
+        has Int     $.release-year      is json-name('release_year');
+        has Int     $.label-id          is json-name('label_id');
+        has Str     $.type;
+        has Str     $.license;
+        has Int     $.user-id           is json-name('user_id');
+        has Str     $.sharing;
+        has Str     $.ean;
+        has Str     $.label-name        is json-name('label_name');
+        has Str     $.artwork-url       is json-name('artwork_url');
+        has Track   @.tracks;
+        has Str     $.kind;
+        has Int     $.duration;
+        has Str     $.permalink;
+        has Bool    $.downloadable;
+        has Str     $.embeddable-by     is json-name('embeddable_by');
+        has Str     $.purchase-url      is json-name('purchase_url');
+        has User    $.user;
+    }
+
+
+    class Comment does JSON::Class {
+        has Int     $.id;
+        has Str     $.body;
+        has Str     $.uri;
+        has Int     $.timestamp;
+        has Str     $.created-at    is json-name('created_at');
+        has Int     $.track-id      is json-name('track_id');
+        has Int     $.user-id       is json-name('user_id');
+        has User    $.user;
+    }
+
+    class Connection does JSON::Class {
+        has Int     $.id;
+        has Bool    $.post-publish      is json-name('post_publish');
+        has Str     $.service;
+        has Str     $.uri;
+        has Str     $.created-at        is json-name('created_at');
+        has Str     $.display-name      is json-name('display_name');
+        has Bool    $.post-favorite     is json-name('post_favorite');
+        has Str     $.type;
+    }
+
+    our constant Connections = (Array[Connection] but JSON::Class);
+
+
+    class Me is User {
+        has Str     $.plan;
+        has Bool    $.primary-email-confirmed   is json-name('primary_email_confirmed');
+        has Int     $.private-playlists-count   is json-name('private_playlists_count');
+        has Int     $.private-tracks-count      is json-name('private_tracks_count');
+    }
+
 
     # declare domains
     our %domain-for = (
