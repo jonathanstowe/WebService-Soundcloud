@@ -454,12 +454,16 @@ class WebService::Soundcloud:ver<0.0.8>:auth<github:jonathanstowe>:api<1.0> {
         'xml'  => 'application/xml'
     );
 
+    class UserAgent is HTTP::UserAgent {
+
+    }
+
 
     has Str $.client-id;
     has Str $.client-secret;
     has %!options;
     has Str $.redirect-uri is rw;
-    has HTTP::UserAgent $.ua is rw;
+    has UserAgent $.ua is rw;
     has Bool $!development = False;
     has $!scope;
     has Str $.username is rw;
@@ -469,11 +473,11 @@ class WebService::Soundcloud:ver<0.0.8>:auth<github:jonathanstowe>:api<1.0> {
     has %.auth-details;
     has Bool $!debug = False;
 
-    submethod BUILD(Str :$!client-id!, Str :$!client-secret!, Str :$!redirect-uri, Str :$!scope, Str :$!username, Str :$!password, HTTP::UserAgent :$!ua, *%opts) {
+    submethod BUILD(Str :$!client-id!, Str :$!client-secret!, Str :$!redirect-uri, Str :$!scope, Str :$!username, Str :$!password, UserAgent :$!ua, *%opts) {
 
         %!options = %opts;
         if not $!ua.defined {
-            $!ua  = HTTP::UserAgent.new;
+            $!ua  = UserAgent.new;
         }
     }
 

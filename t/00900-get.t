@@ -54,6 +54,7 @@ $scloud.auth-details<access_token> = $access_token;
 
 ok(my $me = $scloud.get('/me'),'get to me');
 ok($me.is-success(),"and request worked");
+say $me;
 
 ok($me = $scloud.get-object('/me'), "get object /me");
 
