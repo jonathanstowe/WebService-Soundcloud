@@ -64,6 +64,10 @@ ok($tracks.is-success(), "and the request succeeded");
 ok(my $track-list = $scloud.get-list('/me/tracks'), "get_list on '/me/tracks'");
 ok($track-list.elems, "there are tracks - fragile as it could get deleted");
 is($track-list.elems, $me<track_count>, "and what we expected");
+
+my %dubious-keys = 'permalink_url' => "they aren't consistent about the scheme",
+                   'playback_count'=> "playback_count not consistent";
+
 for $track-list.list -> $track {
     is($track<user><user_id>, $me<user_id>, "got the right user id");
 
@@ -71,7 +75,7 @@ for $track-list.list -> $track {
     ok(my $id = $track<id>, "and we got a track ID");
     lives-ok { $track-one = $scloud.get-object("/tracks/$id") }, "get-object on track";
     for $track.keys -> $k {
-        todo("they aren't consistent about the scheme") if $k eq 'permalink_url';
+        todo(%dubious-keys{$k}) if %dubious-keys{$k}:exists;
         is $track-one{$k}, $track{$k}, "got the right $k";
     }
     my $file = $id ~ '.' ~ ( $track{'original-format'} || 'wav');
