@@ -287,7 +287,7 @@ class WebService::Soundcloud:ver<0.0.6>:auth<github:jonathanstowe> {
     use URI::Template;
 
     class X::NoAuthDetails is Exception {
-        method message() {
+        method message( --> Str ) {
             "neither credentials or auth code provided";
         }
     }
@@ -353,7 +353,7 @@ class WebService::Soundcloud:ver<0.0.6>:auth<github:jonathanstowe> {
     }
 
 
-    method get-authorization-url(*%args) {
+    method get-authorization-url(*%args --> URI ) {
         my $call   = 'get_authorization_url';
         my %params = self!basic-params();
 
@@ -365,7 +365,7 @@ class WebService::Soundcloud:ver<0.0.6>:auth<github:jonathanstowe> {
     }
 
 
-    method get-access-token(Str $code?, *%args) {
+    method get-access-token(Str $code?, *%args --> Str ) {
 
         my %params = self!access-token-params($code);
 
@@ -395,7 +395,7 @@ class WebService::Soundcloud:ver<0.0.6>:auth<github:jonathanstowe> {
     }
 
 
-    method get-access-token-refresh(Str $refresh-token, *%args) {
+    method get-access-token-refresh(Str $refresh-token, *%args --> Str ) {
         my %params = self.basic-params();
 
         %params<refresh_token> = $refresh-token;
@@ -406,7 +406,7 @@ class WebService::Soundcloud:ver<0.0.6>:auth<github:jonathanstowe> {
     }
 
 
-    method request(Str $method, URI $url, HTTP::Header $headers, %content?) returns HTTP::Response {
+    method request(Str $method, URI $url, HTTP::Header $headers, %content? --> HTTP::Response ) {
         my $req = HTTP::Request.new( $method, $url, $headers );
 
         if %content.keys.elems {
@@ -565,7 +565,7 @@ class WebService::Soundcloud:ver<0.0.6>:auth<github:jonathanstowe> {
     }
 
 
-    sub is-redirect(Int() $code) returns Bool {
+    sub is-redirect(Int() $code --> Bool ) {
         my Bool $rc = False;
 
         $rc = ($code ~~ 301|302|303|307);
@@ -596,7 +596,7 @@ class WebService::Soundcloud:ver<0.0.6>:auth<github:jonathanstowe> {
         $object;
     }
 
-    method !access-token(%params) {
+    method !access-token(%params --> Str ) {
         my $call     = '_access_token';
         my $url      = self!access-token-url();
         my $headers  = self!build-headers();
@@ -623,13 +623,13 @@ class WebService::Soundcloud:ver<0.0.6>:auth<github:jonathanstowe> {
         $access_token;
     }
 
-    method !access-token-url(*%params) {
+    method !access-token-url(*%params --> URI ) {
         self!build-url( %path-for<access_token>, %params );
     }
 
     has $!query-template = URI::Template.new(template => '{?query*}');
 
-    method !build-url(Str $path, %params?) {
+    method !build-url(Str $path, %params? --> URI ) {
         my $base_url = $!development ?? %domain-for<development> !! %domain-for<production>;
 
         my Bool $b-slash = ?($base_url ~~ /\/$$/);
@@ -668,7 +668,7 @@ class WebService::Soundcloud:ver<0.0.6>:auth<github:jonathanstowe> {
     }
 
 
-    method !build-headers(%extra?) returns HTTP::Header {
+    method !build-headers(%extra? --> HTTP::Header ) {
         my $headers = HTTP::Header.new;
 
         if $!response-format.defined {
