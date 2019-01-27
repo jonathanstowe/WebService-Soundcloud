@@ -100,7 +100,7 @@ https://github.com/jonathanstowe/WebService-Soundcloud/issues
 
 Please see the [LICENCE](LICENCE) file in the distribution
 
-© Jonathan Stowe 2015, 2016, 2017
+© Jonathan Stowe 2015 - 2019
 
 
 

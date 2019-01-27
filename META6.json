@@ -1,5 +1,9 @@
 {
   "name": "WebService::Soundcloud",
+  "version": "0.0.7",
+  "auth": "github:jonathanstowe",
+  "api" : "1.0",
+  "description": "Provide a Perl 6 interface to the Soundcloud REST API",
   "source-url": "git://github.com/jonathanstowe/WebService-Soundcloud.git",
   "support": {
     "irc": "irc:// irc.freenode.net/#perl6",
@@ -10,7 +14,6 @@
   "resources": [ ],
   "build-depends": [ ],
   "author": "Jonathan Stowe <jns+git@gellyfish.co.uk>",
-  "auth": "github:jonathanstowe",
   "depends": [
     "JSON::Fast",
     "URI",
@@ -33,10 +36,8 @@
   "provides": {
     "WebService::Soundcloud": "lib/WebService/Soundcloud.pm"
   },
-  "version": "0.0.6",
   "authors": [
     "Jonathan Stowe <jns+git@gellyfish.co.uk>"
   ],
-  "description": "Provide a Perl 6 interface to the Soundcloud REST API",
   "meta-version": "0"
 }
