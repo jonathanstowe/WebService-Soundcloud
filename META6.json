@@ -1,6 +1,6 @@
 {
   "name": "WebService::Soundcloud",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "auth": "github:jonathanstowe",
   "api" : "1.0",
   "description": "Provide a Perl 6 interface to the Soundcloud REST API",
@@ -39,5 +39,5 @@
   "authors": [
     "Jonathan Stowe <jns+git@gellyfish.co.uk>"
   ],
-  "meta-version": "0"
+  "meta-version": "1"
 }
