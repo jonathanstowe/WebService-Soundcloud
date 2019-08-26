@@ -39,8 +39,8 @@ my $url = URI.new(uri => 'https://api.soundcloud.com/connect?response_type=code&
 
 my $redirect_url = $scloud.get-authorization-url(scope => 'non-expiring');
 
-for $url.query_form.keys -> $k {
-    is $redirect_url.query_form{$k}, $url.query_form{$k}, "Got correct $k in authorization-url";
+for $url.query.keys -> $k {
+    is $redirect_url.query{$k}, $url.query{$k}, "Got correct $k in authorization-url";
 }
 
 my $token;
@@ -65,8 +65,10 @@ ok(my $track-list = $scloud.get-list('/me/tracks'), "get_list on '/me/tracks'");
 ok($track-list.elems, "there are tracks - fragile as it could get deleted");
 is($track-list.elems, $me<track_count>, "and what we expected");
 
-my %dubious-keys = 'permalink_url' => "they aren't consistent about the scheme",
-                   'playback_count'=> "playback_count not consistent";
+my %dubious-keys = 'permalink_url'  => "they aren't consistent about the scheme",
+                   'waveform_url'   => 'appears they sometime use different hosts',
+                   'user'           => 'URIs in user object vary',
+                   'playback_count' => "playback_count not consistent";
 
 for $track-list.list -> $track {
     is($track<user><user_id>, $me<user_id>, "got the right user id");
@@ -76,7 +78,7 @@ for $track-list.list -> $track {
     lives-ok { $track-one = $scloud.get-object("/tracks/$id") }, "get-object on track";
     for $track.keys -> $k {
         todo(%dubious-keys{$k}) if %dubious-keys{$k}:exists;
-        is $track-one{$k}, $track{$k}, "got the right $k";
+        is-deeply $track-one{$k}, $track{$k}, "got the right $k";
     }
     my $file = $id ~ '.' ~ ( $track{'original-format'} || 'wav');
     
