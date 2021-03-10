@@ -13,36 +13,36 @@ You can use the Full OAuth flow:
 =begin code
 
     use WebService::Soundcloud;
-    
+
     my $scloud = WebService::Soundcloud.new(:$client-id, :$client-secret, redirect-uri => 'http://mydomain.com/callback' );
-    
+
     # Now get authorization url
     my $authorization_url = $scloud.get-authorization-url();
-    
+
     # Now your appplication should redirect the user to the authorization uri
     # When the User has authenticated and approved the connection they will
     # in turn be redirected back to your redirect URI with either the grant code
     # (as code) or an error (as error) as query parameters
-    
+
     # Get Access Token with the code provided as query parameter to the redirect
     my $access_token = $scloud.get-access-token($code);
-    
+
     # Save access_token and refresh_token, expires_in, scope for future use
     my $oauth_token = $access_token<access_token>;
-    
+
     # a GET request '/me' - gets users details
     my $user = $scloud.get('/me');
-    
+
     # a PUT request '/me' - updated users details
-    my $user = $scloud.put('/me', to-json( { user => { description => 'Have fun with Perl wrapper to Soundcloud API' } } ) );
-                
+    my $user = $scloud.put('/me', to-json( { user => { description => 'Have fun with the Raku wrapper to Soundcloud API' } } ) );
+
     # Comment on a Track POSt request usage
-    my $comment = $scloud.post('/tracks/<track_id>/comments', 
+    my $comment = $scloud.post('/tracks/<track_id>/comments',
                             { body => 'I love this hip-hop track' } );
-    
+
     # Delete a track
     my $track = $scloud.delete('/tracks/{id}');
-    
+
 =end code
 
 or you can use direct credential based authorisation that can skip the redirections:
@@ -65,15 +65,15 @@ or you can use direct credential based authorisation that can skip the redirecti
 
 =head1 DESCRIPTION
 
-This module provides a wrapper around Soundcloud REST API to work with 
-different kinds of soundcloud resources. It contains many functions for 
+This module provides a wrapper around Soundcloud REST API to work with
+different kinds of soundcloud resources. It contains many functions for
 convenient use rather than standard Soundcloud REST API.
 
 The complete API is documented at L<http://developers.soundcloud.com/docs>.
 
 In order to use this module you will need to register your application
 with Soundcloud at L<http://soundcloud.com/you/apps> : your application will
-be given a client ID and a client secret which you will need to use to 
+be given a client ID and a client secret which you will need to use to
 connect. The client ID used in the tests will not work correctly for your
 own application as the callback URI is set to 'localhost'.
 
@@ -116,7 +116,7 @@ It is the URI of your application that the user will be redirected
 "Connect" on the soundcloud connect page.  This will not be used if
 you are using the credential based authentication to obtain the OAuth token
 (e.g if you are an application with no UI that is operating for a single
-user.) 
+user.)
 
 =head3 method basic-params
 
@@ -244,12 +244,12 @@ L<HTTP::Response> object
 ** NOT YET IMPLEMENTED **
 
 This method is used to download a particular track id given as first argument.
-second argument is name of the destination path where the downloaded track will 
+second argument is name of the destination path where the downloaded track will
 be saved to. This method will return the file path of downloaded track.
 
 =head3 method request-format
 
-Accessor for the request format to be used.  The default is 'json' which 
+Accessor for the request format to be used.  The default is 'json' which
 should be suitable for all applications. If the format is set to something
 which Soundcloud can't deal with there will be a "406" ("Not acceptable")
 response from the API.
@@ -279,7 +279,7 @@ value.
 
 =end pod
 
-class WebService::Soundcloud:ver<0.0.8>:auth<github:jonathanstowe>:api<1.0> {
+class WebService::Soundcloud:ver<0.0.9>:auth<github:jonathanstowe>:api<1.0> {
 
     use HTTP::UserAgent;
     use URI;
@@ -597,7 +597,7 @@ class WebService::Soundcloud:ver<0.0.8>:auth<github:jonathanstowe>:api<1.0> {
                 if (my $obj = self.parse-content( $res.decoded-content)).defined {
                     if $obj ~~ Array {
                         $offset += $limit;
-                        $continue = $obj.elems > 0;
+                        $continue = ( $obj.elems > 0 && $obj.elems == $limit );
                     }
                     elsif $obj ~~ Hash {
                         if $obj<collection>:exists {
@@ -750,7 +750,7 @@ class WebService::Soundcloud:ver<0.0.8>:auth<github:jonathanstowe>:api<1.0> {
         say $response.Str;
 
         if ! $response.is-success() {
-            die "Failed to fetch " 
+            die "Failed to fetch "
                 ~ $url ~ " "
                 ~ $response.content() ~ " ("
                 ~ $response.status-line() ~ ")"
@@ -797,7 +797,7 @@ class WebService::Soundcloud:ver<0.0.8>:auth<github:jonathanstowe>:api<1.0> {
         }
 
         my $uri = URI.new( $abs-url );
-   
+
         my $url-noq = $uri.Str.subst(/\?.*/,"");
 
         if  $uri.query.defined {
@@ -840,4 +840,4 @@ class WebService::Soundcloud:ver<0.0.8>:auth<github:jonathanstowe>:api<1.0> {
 
 
 }
-# vim: ft=perl6 expandtab sw=4
+# vim: ft=raku expandtab sw=4

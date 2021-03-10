@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 use Test;
@@ -54,7 +54,6 @@ $scloud.auth-details<access_token> = $access_token;
 
 ok(my $me = $scloud.get('/me'),'get to me');
 ok($me.is-success(),"and request worked");
-say $me;
 
 ok($me = $scloud.get-object('/me'), "get object /me");
 
@@ -82,7 +81,7 @@ for $track-list.list -> $track {
         is-deeply $track-one{$k}, $track{$k}, "got the right $k";
     }
     my $file = $id ~ '.' ~ ( $track{'original-format'} || 'wav');
-    
+
     skip("downloads not working yet", 2);
     next;
     ok($scloud.download($id, $file), "download");
@@ -91,4 +90,4 @@ for $track-list.list -> $track {
 }
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

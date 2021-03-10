@@ -1,15 +1,15 @@
 # WebService::Soundcloud 
 
 
-Provide a Perl 6 interface to the Soundcloud REST API.
+Provide a Raku interface to the Soundcloud REST API.
 
-[![Build Status](https://travis-ci.org/jonathanstowe/WebService-Soundcloud.svg?branch=master)](https://travis-ci.org/jonathanstowe/WebService-Soundcloud)
+![Build Status](https://github.com/jonathanstowe/WebService-Soundcloud/workflows/CI/badge.svg)
 
 ## Synopsis
 
 You can use the Full OAuth flow:
 
-```perl6
+```raku
 
     use WebService::Soundcloud;
     
@@ -33,9 +33,9 @@ You can use the Full OAuth flow:
     my $user = $scloud->get('/me');
     
     # a PUT request '/me' - updated users details
-    my $user = $scloud->put('/me', to-json( { user => { description => 'Have fun with Perl wrapper to Soundcloud API' } } ) );
+    my $user = $scloud->put('/me', to-json( { user => { description => 'Have fun with the Raku wrapper to Soundcloud API' } } ) );
                 
-    # Comment on a Track POSt request usage
+    # Comment on a Track PoSt request usage
     my $comment = $scloud->post('/tracks/<track_id>/comments', 
                             { body => 'I love this hip-hop track' } );
     
@@ -46,7 +46,7 @@ You can use the Full OAuth flow:
 
 or you can use direct credential based authorisation that can skip the redirections:
 
-```perl6
+```raku
 
     use WebService::Soundcloud;
 
@@ -79,8 +79,7 @@ own application as the callback URI is set to 'localhost'.
 
 ## Installation
 
-If you have a working Rakudo Perl 6 installation can install directly with
-"zef":
+If you have a working Rakudo installation can install directly with "zef":
 
     # From the source directory
    
@@ -98,9 +97,8 @@ https://github.com/jonathanstowe/WebService-Soundcloud/issues
 
 ## Licence
 
+This is free software.
+
 Please see the [LICENCE](LICENCE) file in the distribution
 
-© Jonathan Stowe 2015 - 2019
-
-
-
+© Jonathan Stowe 2015 - 2021

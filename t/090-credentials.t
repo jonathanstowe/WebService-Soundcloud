@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 
@@ -43,4 +43,4 @@ ok(?$tracks.elems, "and we got some tracks");
 is($tracks.elems, $me{'track_count'}, "and the same as the number on the me");
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

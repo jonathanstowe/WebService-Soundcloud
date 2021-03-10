@@ -1,62 +1,117 @@
 {
-  "type": "layout",
   "children": [
     {
-      "purpose": null,
-      "type": "directory",
-      "name": "t",
-      "children": [
-        {
-          "type": "file",
-          "name": "010-load.t"
-        },
-        {
-          "type": "file",
-          "name": "001-meta.t"
-        },
-        {
-          "type": "file",
-          "name": "030-get.t"
-        },
-        {
-          "type": "file",
-          "name": "040-credentials.t"
-        }
-      ]
-    },
-    {
-      "type": "file",
-      "name": "README.md"
-    },
-    {
-      "name": "lib",
-      "children": [
-        {
-          "name": "WebService",
-          "children": [
-            {
-              "name": "Soundcloud.pm",
-              "type": "file"
-            }
-          ],
-          "purpose": null,
-          "type": "directory"
-        }
-      ],
-      "type": "directory",
-      "purpose": null
-    },
-    {
-      "type": "file",
-      "name": "META6.json"
+      "name": "META6.json",
+      "type": "file"
     },
     {
       "type": "file",
       "name": "Changes"
     },
     {
+      "name": "LICENCE",
+      "type": "file"
+    },
+    {
+      "type": "directory",
+      "children": [
+        {
+          "name": "090-credentials.t",
+          "type": "file"
+        },
+        {
+          "name": "080-get.t",
+          "type": "file"
+        },
+        {
+          "name": "020-me.t",
+          "type": "file"
+        },
+        {
+          "name": "070-connection.t",
+          "type": "file"
+        },
+        {
+          "name": "100-load.t",
+          "type": "file"
+        },
+        {
+          "name": "060-comment.t",
+          "type": "file"
+        },
+        {
+          "name": "030-user.t",
+          "type": "file"
+        },
+        {
+          "type": "directory",
+          "purpose": null,
+          "name": "data",
+          "children": [
+            {
+              "type": "file",
+              "name": "playlist.json"
+            },
+            {
+              "name": "user.json",
+              "type": "file"
+            },
+            {
+              "type": "file",
+              "name": "comment.json"
+            },
+            {
+              "name": "me.json",
+              "type": "file"
+            },
+            {
+              "type": "file",
+              "name": "track.json"
+            },
+            {
+              "type": "file",
+              "name": "connections.json"
+            }
+          ]
+        },
+        {
+          "name": "050-playlist.t",
+          "type": "file"
+        },
+        {
+          "type": "file",
+          "name": "040-track.t"
+        },
+        {
+          "name": "010-meta.t",
+          "type": "file"
+        }
+      ],
+      "name": "t",
+      "purpose": null
+    },
+    {
+      "name": "lib",
+      "children": [
+        {
+          "purpose": null,
+          "children": [
+            {
+              "type": "file",
+              "name": "Soundcloud.pm"
+            }
+          ],
+          "type": "directory",
+          "name": "WebService"
+        }
+      ],
+      "purpose": null,
+      "type": "directory"
+    },
+    {
       "type": "file",
-      "name": "LICENCE"
+      "name": "README.md"
     }
-  ]
+  ],
+  "type": "layout"
 }
